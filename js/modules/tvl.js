@@ -549,12 +549,6 @@
     });
   }
 
-  // ---- Expose calculation functions ----
-  App.tvl.calculateVolume = calculateVolume;
-  App.tvl.calculateDiameter = calculateDiameter;
-  App.tvl.calculateHeight = calculateHeight;
-  App.tvl.calculateTreeMetrics = calculateTreeMetrics;
-
   App.tvl = {
     tvlSignature: tvlSignature,
     normalizeTvl: normalizeTvl,
