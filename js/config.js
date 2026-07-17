@@ -12,6 +12,7 @@ window.STORAGE_PAGE_KEY = "bliforest-offline-page";
 window.TVL_INDEX_PATH = "data/tvl-index.json";
 window.TREES_PER_PAGE = 10;
 window.CLAMPS_PER_PAGE = 10;
+window.TVL_REMOTE_BASE = "https://raw.githubusercontent.com/avezoor/BliForest/main/data/tvl";
 
 window.FALLBACK_TVL_FILES = [
   "data/tvl/tvl_jati.json",
@@ -20,8 +21,8 @@ window.FALLBACK_TVL_FILES = [
   "data/tvl/tvl_pinus.json",
   "data/tvl/tvl_damar.json",
   "data/tvl/tvl_maesosis.json",
-  "data/tvl/tvl_acc_mangium.json",
-  "data/tvl/tvl_acc_au.json",
+  "data/tvl/tvl_akasia_mangium.json",
+  "data/tvl/tvl_akasia_au.json",
   "data/tvl/tvl_johar.json",
   "data/tvl/tvl_lokes.json",
   "data/tvl/tvl_eupcaliptus.json",

@@ -16,9 +16,9 @@
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/pages.css">
+  <link rel="stylesheet" href="css/responsive.css">
   <!-- Data bundles (provide global variables) -->
   <script src="data/bkph-bundle.js" defer></script>
-  <script src="data/tvl-bundle.js" defer></script>
 
   <!-- Core scripts (order matters): config → utils → modules → app -->
   <script src="js/config.js" defer></script>
@@ -33,6 +33,15 @@
 </head>
 <body>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- App loading overlay -->
+  <div id="app-loader" class="app-loader" aria-live="polite">
+    <div class="loader-inner">
+      <img src="icons/pwa/icon-192.png" alt="" width="48" height="48">
+      <p class="loader-text">Memuat data TVL…</p>
+      <p id="loader-sub" class="loader-sub">Mohon tunggu sebentar</p>
+    </div>
+  </div>
 
   <div id="app-shell" class="app-shell">
     <aside id="sidebar" class="sidebar">
@@ -131,23 +140,36 @@
 
             <article class="panel">
               <div class="panel-heading">
-                <div><p class="section-label">PRATINJAU TVL</p><h3 id="tvl-preview-title">Tabel volume</h3></div>
-                <div class="tvl-panel-actions">
-                  <span id="tvl-count" class="badge">0 baris</span>
-                  <button id="update-tvl-btn" class="btn btn-secondary compact" type="button">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-                    Perbarui TVL
-                  </button>
-                </div>
+                <div><p class="section-label">TAMBAHKAN MANUAL</p></div>
               </div>
-              <div id="tvl-sync-info" class="tvl-sync-info">Belum Pemeriksaan</div>
-              <div class="table-wrap preview-table">
-                <table>
-                  <thead><tr><th>Keliling (cm)</th><th>Volume (m³)</th></tr></thead>
-                  <tbody id="tvl-preview-body"></tbody>
-                </table>
-              </div>
+              <form id="species-custom-form" class="form-grid two-col-form">
+                <label class="field full">
+                  <span>Nama jenis kayu</span>
+                  <input id="custom-species-name" type="text" placeholder="Contoh: Jati" required maxlength="80">
+                </label>
+                <label class="field">
+                  <span>Koefisien a</span>
+                  <input id="custom-coef-a" type="number" step="0.0000000000001" placeholder="0.000001" required>
+                </label>
+                <label class="field">
+                  <span>Koefisien b</span>
+                  <input id="custom-coef-b" type="number" step="0.001" placeholder="1" required>
+                </label>
+                <label class="field">
+                  <span>Factor (f)</span>
+                  <input id="custom-factor" type="number" step="0.01" value="1" placeholder="1">
+                </label>
+                <label class="field">
+                  <span>Factor Koreksi (fc)</span>
+                  <input id="custom-factor-correction" type="number" step="0.01" value="0.7" placeholder="0.7">
+                </label>
+                <button class="btn btn-primary full" type="submit">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                  Tambah Jenis Kayu
+                </button>
+              </form>
             </article>
+
           </div>
 
           <article class="panel section-gap">
@@ -216,7 +238,7 @@
             <div class="table-wrap">
               <table>
                 <thead>
-                  <tr><th>Daftar Klem</th><th>BKPH / RPH</th><th>Jenis Utama</th><th>Tahun Tanam</th><th>Rata-rata Keliling</th><th>Jumlah Batang</th><th>Total Volume</th></tr>
+                  <tr><th>Daftar Klem</th><th>BKPH / RPH</th><th>Jenis Utama</th><th>Tahun Tanam</th><th>Rata Keliling</th><th>Rata Diameter</th><th>Rata Tinggi</th><th>Jumlah</th><th>Total Volume</th></tr>
                 </thead>
                 <tbody id="recap-body"></tbody>
               </table>
@@ -289,7 +311,7 @@
               </div>
               <div class="info-row">
                 <span class="info-label">Pengembang</span>
-                <span id="about-developer" class="about-developer">Avezoor</span>
+                <a id="about-developer" class="about-developer" href="https://github.com/avezoor" target="_blank" rel="noopener noreferrer">Avezoor</a>
               </div>
             </div>
             <div class="about-actions">

@@ -29,9 +29,81 @@
   // ---- Trees page ----
   function bindTree() {
     var el = App.components.el;
-    el("tvl-select") && el("tvl-select").addEventListener("change", App.components.renderTvlPreview);
     el("tree-form") && el("tree-form").addEventListener("submit", handleTreeSubmit);
     el("tree-list") && el("tree-list").addEventListener("click", handleTreeListClick);
+    // Custom species form
+    el("species-custom-form") && el("species-custom-form").addEventListener("submit", handleCustomSpeciesSubmit);
+  }
+
+  // ---- Handle custom species submit ----
+  function handleCustomSpeciesSubmit(e) {
+    e.preventDefault();
+    var el = App.components.el;
+    var name = (el("custom-species-name") && el("custom-species-name").value || "").trim();
+    var a = Number(el("custom-coef-a") && el("custom-coef-a").value);
+    var b = Number(el("custom-coef-b") && el("custom-coef-b").value);
+    var factor = Number(el("custom-factor") && el("custom-factor").value) || 1;
+    var fc = Number(el("custom-factor-correction") && el("custom-factor-correction").value) || 0.7;
+    var state = App.storage.state;
+
+    if (!name) {
+      App.components.showToast("Nama jenis kayu harus diisi.");
+      return;
+    }
+    if (!a || !b || a <= 0 || b <= 0) {
+      App.components.showToast("Koefisien a dan b harus diisi dengan nilai yang valid.");
+      return;
+    }
+    if (state.species.some(function(s) { return s.name.toLowerCase() === name.toLowerCase(); })) {
+      App.components.showToast("Nama jenis kayu tersebut sudah tersimpan.");
+      return;
+    }
+
+    // Create custom TVL for this species
+    var tvlId = "tvl_custom_" + U.createId("custom");
+    var customTvl = {
+      id: tvlId,
+      name: "TVL " + name,
+      species: name,
+      normalizedSpecies: name,
+      version: "custom",
+      updatedAt: new Date().toISOString(),
+      model: "berkhout",
+      formula: {
+        volume: "V = a * K^b * f",
+        diameter: "D = K / π",
+        height: "H = (40000 * π * a * K^(b-2)) / fc"
+      },
+      coefficients: {
+        a: a,
+        b: b,
+        factor: factor,
+        factor_correction: fc
+      },
+      K: { unit: "cm", description: "Keliling" },
+      diameter: { unit: "cm" },
+      height: { unit: "m" },
+      volume: { unit: "m3" }
+    };
+
+    // Add species with reference to custom TVL
+    state.species.push({
+      id: U.createId("species"),
+      name: name,
+      tvlId: tvlId,
+      createdAt: new Date().toISOString()
+    });
+
+    // Save custom TVL
+    state.tvls[tvlId] = customTvl;
+
+    App.storage.saveState();
+    e.target.reset();
+    App.components.renderTvlSelect(tvlId);
+    App.components.renderSpecies();
+    App.components.renderClampSpeciesSelect();
+    App.components.renderClamps();
+    App.components.showToast('Jenis kayu "' + name + '" ditambahkan dengan TVL custom.');
   }
 
   function handleTreeSubmit(e) {
@@ -232,6 +304,18 @@
       App.storage.setTreePage(clamp4.id, cur);
       App.components.renderClamps();
     }
+    if (action === "clamp-prev") {
+      App.storage.clampPage = Math.max(1, App.storage.clampPage - 1);
+      App.components.renderClamps();
+    }
+    if (action === "clamp-next") {
+      var total = App.storage.clampSearchQuery
+        ? state.clamps.filter(function(c) { return App.storage.matchesClampSearch(c, App.storage.clampSearchQuery); }).length
+        : state.clamps.length;
+      var tp = Math.max(1, Math.ceil(total / (global.CLAMPS_PER_PAGE || 10)));
+      App.storage.clampPage = Math.min(tp, App.storage.clampPage + 1);
+      App.components.renderClamps();
+    }
   }
 
   function handleTreeEntrySubmit(e) {
@@ -245,7 +329,16 @@
     var circumference = Number(data.get("circumference"));
     var lookup = App.tvl && App.tvl.lookupVolume(speciesId, circumference);
     var treeNumber = String(data.get("treeNumber") || "").trim();
+    var state = App.storage.state;
 
+    if (!state.species.length) {
+      App.components.showToast("Belum ada jenis kayu. Tambahkan di halaman \"Tambah Pohon\" terlebih dahulu.");
+      return;
+    }
+    if (!speciesId) {
+      App.components.showToast("Pilih jenis kayu.");
+      return;
+    }
     if (!treeNumber || !Number.isFinite(circumference) || !lookup) {
       App.components.showToast("Lengkapi nomor pohon, jenis kayu, dan keliling yang valid.");
       return;
@@ -256,20 +349,28 @@
     }
     var sp = App.storage.getSpecies(speciesId);
     var tvlId = sp && sp.tvlId || null;
+    var tvl = tvlId && App.storage.state.tvls[tvlId];
+    var isBerkhout = tvl && tvl.model === "berkhout";
     clamp.trees = clamp.trees || [];
-    clamp.trees.push({
+    var newTree = {
       id: U.createId("tree"),
       treeNumber: treeNumber,
       speciesId: speciesId,
       circumference: circumference,
       volume: lookup.volume,
-      tvlCircumference: lookup.matchedCircumference,
+      tvlCircumference: isBerkhout ? circumference : lookup.matchedCircumference,
       tvlId: tvlId,
-      tvlVersion: (App.storage.state.tvls[tvlId] && App.storage.state.tvls[tvlId].version) || (App.storage.state.tvlSync && App.storage.state.tvlSync.indexVersion) || null,
+      tvlVersion: (tvl && tvl.version) || (App.storage.state.tvlSync && App.storage.state.tvlSync.indexVersion) || null,
       volumeUpdatedAt: new Date().toISOString(),
       note: String(data.get("note") || "").trim(),
       createdAt: new Date().toISOString()
-    });
+    };
+    // Save diameter and height for berkhout model
+    if (isBerkhout) {
+      newTree.diameter = lookup.diameter;
+      newTree.height = lookup.height;
+    }
+    clamp.trees.push(newTree);
     App.storage.setTreePage(clamp.id, 1);
     App.storage.saveState();
     form.reset();

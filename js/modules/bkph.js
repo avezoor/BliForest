@@ -24,6 +24,12 @@
     };
     var data = isValidBkphData(bundled) ? clone(bundled) : {};
 
+    // If offline, skip network fetch entirely (bundled data is primary source)
+    if (!navigator.onLine) {
+      Object.assign(App.storage.bkphData, data);
+      return Promise.resolve();
+    }
+
     return fetch("data/bkph.json?t=" + Date.now(), { cache: "no-store" })
       .then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function(fetched) {

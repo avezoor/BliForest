@@ -9,8 +9,16 @@
 .master-stat .stat-label { display: block; color: var(--muted); font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
 .master-stat strong { display: block; font-size: 28px; color: var(--ink); letter-spacing: -.03em; }
 .master-actions { padding-top: 16px; border-top: 1px solid var(--line); display: flex; gap: 10px; flex-wrap: wrap; }
-.master-actions .btn { flex: 1; min-width: 140px; }
+.master-actions .btn { flex: 1 1 auto; min-width: 140px; }
 .master-actions .btn-danger { flex: none; width: 100%; }
+
+/* Recap table responsive */
+#recap-body td:nth-child(n+4),
+#recap-body th:nth-child(n+4) { display: none; }
+@media (min-width: 700px) {
+  #recap-body td:nth-child(n+4),
+  #recap-body th:nth-child(n+4) { display: table-cell; }
+}
 
 /* About page */
 .about-panel { max-width: 600px; }
@@ -24,6 +32,7 @@
 .info-label { color: var(--muted); font-size: 13px; }
 .info-value { font-weight: 700; color: var(--ink); font-size: 13px; }
 .about-developer {
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -34,6 +43,10 @@
   color: var(--green-900);
   font-weight: 800;
   font-size: 12px;
+}
+.about-developer:hover {
+  background: var(--green-100);
+  border-color: var(--green-700);
 }
 .about-date-badge {
   display: inline-flex;

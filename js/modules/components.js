@@ -7,7 +7,7 @@
 (function(global) {
   var App = global.App || {};
   var U = global.Utils || {};
-  var TREES_PER_PAGE = global.TREES_PER_PAGE || 10;
+  var CLAMPS_PER_PAGE = global.CLAMPS_PER_PAGE || 10;
 
   // ---- Element cache ----
   var _el = null;
@@ -63,7 +63,6 @@
 
     if (page === "trees") {
       renderTvlSelect();
-      renderTvlPreview();
       renderSpecies();
     } else if (page === "clamps") {
       App.handlers.bindClampForm();
@@ -108,25 +107,6 @@
     if (current && state.tvls[current]) _el["tvl-select"].value = current;
   }
 
-  function renderTvlPreview() {
-    var state = App.storage.state;
-    var tvl = state.tvls && state.tvls[_el["tvl-select"] && _el["tvl-select"].value];
-    if (!tvl) {
-      if (_el["tvl-preview-title"]) _el["tvl-preview-title"].textContent = "Tabel volume";
-      if (_el["tvl-count"]) _el["tvl-count"].textContent = "0 baris";
-      if (_el["tvl-preview-body"]) _el["tvl-preview-body"].innerHTML = '<tr><td colspan="2" class="muted">TVL belum tersedia.</td></tr>';
-      return;
-    }
-    if (_el["tvl-preview-title"]) _el["tvl-preview-title"].textContent = tvl.name;
-    if (_el["tvl-count"]) _el["tvl-count"].textContent = tvl.entries.length + " baris";
-    if (_el["tvl-preview-body"]) {
-      _el["tvl-preview-body"].innerHTML = tvl.entries.map(function(row) {
-        return '<tr><td class="numeric">' + U.formatNumber(row.circumference, 2) + '</td>' +
-          '<td class="numeric">' + U.formatNumber(row.volume, 4) + '</td></tr>';
-      }).join("");
-    }
-  }
-
   function renderSpecies() {
     var state = App.storage.state;
     if (!_el["tree-count"] || !_el["tree-list"]) return;
@@ -140,6 +120,7 @@
       var used = state.clamps && state.clamps.some(function(c) {
         return c.speciesId === item.id || (c.trees && c.trees.some(function(t) { return t.speciesId === item.id; }));
       });
+      var isBerkhout = tvl && tvl.model === "berkhout";
       return '<article class="tree-card">' +
         '<div class="tree-card-head">' +
           '<div><h4>' + U.escapeHtml(item.name) + '</h4>' +
@@ -151,9 +132,9 @@
           '</button>' +
         '</div>' +
         '<div class="tree-meta">' +
-          '<span class="meta-pill">' + (tvl && tvl.entries && tvl.entries.length || 0) + ' baris TVL</span>' +
+          '<span class="meta-pill">' + (isBerkhout ? "Berkhout" : (tvl && tvl.entries && tvl.entries.length || 0) + " baris") + '</span>' +
           (tvl && tvl.version ? '<span class="meta-pill">Versi ' + U.escapeHtml(tvl.version) + '</span>' : '') +
-          '<span class="meta-pill">Keliling cm</span><span class="meta-pill">Volume m³</span>' +
+          '<span class="meta-pill">Keliling cm</span><span class="meta-pill">Diameter cm</span><span class="meta-pill">Tinggi m</span><span class="meta-pill">Volume m³</span>' +
         '</div>' +
       '</article>';
     }).join("");
@@ -188,6 +169,11 @@
       ? state.clamps.filter(function(c) { return App.storage.matchesClampSearch(c, query); })
       : state.clamps;
 
+    var totalPages = Math.max(1, Math.ceil(filtered.length / CLAMPS_PER_PAGE));
+    var safePage = Math.min(Math.max(1, App.storage.clampPage), totalPages);
+    var start = (safePage - 1) * CLAMPS_PER_PAGE;
+    var paged = filtered.slice(start, start + CLAMPS_PER_PAGE);
+
     if (_el["clamp-count"]) {
       _el["clamp-count"].textContent = query
         ? filtered.length + " dari " + state.clamps.length + " daftar"
@@ -203,8 +189,21 @@
       _el["clamp-list"].innerHTML = U.emptyState("Tidak ada hasil", 'Tidak ada daftar klem yang cocok dengan pencarian "' + U.escapeHtml(query) + '".');
       return;
     }
-    _el["clamp-list"].innerHTML = filtered.map(function(clamp) { return renderClampCard(clamp); }).join("");
+    _el["clamp-list"].innerHTML = paged.map(function(clamp) { return renderClampCard(clamp); }).join("") +
+      (filtered.length > CLAMPS_PER_PAGE ? renderClampPagination(safePage, totalPages) : "");
     Array.prototype.slice.call(document.querySelectorAll(".tree-entry-form")).forEach(updateVolumeForForm);
+  }
+
+  function renderClampPagination(curPage, totalPages) {
+    return '<div class="pagination clamp-pagination">' +
+      '<button type="button" class="page-btn" data-action="clamp-prev"' + (curPage <= 1 ? ' disabled' : '') + '>' +
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>' +
+      '</button>' +
+      '<span class="page-info">Halaman ' + curPage + ' dari ' + totalPages + '</span>' +
+      '<button type="button" class="page-btn" data-action="clamp-next"' + (curPage >= totalPages ? ' disabled' : '') + '>' +
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>' +
+      '</button>' +
+    '</div>';
   }
 
   function renderClampCard(clamp) {
@@ -250,12 +249,14 @@
           '<label class="field"><span>No. Pohon</span><input name="treeNumber" type="text" required maxlength="60" placeholder="Contoh: J-001"></label>' +
           '<label class="field"><span>Jenis Kayu</span><select name="speciesId" required>' + speciesOptionsHtml(clamp.speciesId) + '</select></label>' +
           '<label class="field"><span>Keliling (cm)</span><input name="circumference" type="number" min="0" step="0.1" required placeholder="0"></label>' +
+          '<label class="field"><span>Diameter (cm)</span><input name="diameter" type="text" readonly value="0,00"></label>' +
+          '<label class="field"><span>Tinggi (m)</span><input name="height" type="text" readonly value="0,00"></label>' +
           '<label class="field"><span>Volume (m3)</span><input name="volume" type="text" readonly value="0,0000"></label>' +
           '<label class="field"><span>Keterangan</span><textarea name="note" maxlength="500" placeholder="Keterangan"></textarea></label>' +
           '<button class="plus-btn" type="submit" aria-label="Tambahkan pohon">' +
             '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>' +
           '</button>' +
-          '<div class="volume-help" data-role="volume-help">Masukkan keliling untuk membaca TVL.</div>' +
+          '<div class="volume-help" data-role="volume-help">Masukkan keliling untuk menghitung volume.</div>' +
         '</form>' +
         '<div class="table-wrap detail-table">' +
           '<div class="tree-search-bar">' +
@@ -267,10 +268,10 @@
             '<span class="tree-search-count">' + (treeSq ? filteredTrees.length + " dari " + (clamp.trees && clamp.trees.length || 0) + " data" : (clamp.trees && clamp.trees.length || 0) + " data") + '</span>' +
           '</div>' +
           '<table>' +
-            '<thead><tr><th>No Pohon</th><th>Jenis</th><th>Keliling (cm)</th><th>Volume (m3)</th><th>Keterangan</th><th>Aksi</th></tr></thead>' +
+            '<thead><tr><th>No Pohon</th><th>Jenis</th><th>Keliling (cm)</th><th>Diameter (cm)</th><th>Tinggi (m)</th><th>Volume (m3)</th><th>Keterangan</th><th>Aksi</th></tr></thead>' +
             '<tbody>' +
               (paged.length ? paged.map(function(t) { return renderTreeRow(clamp, t); }).join("") :
-                '<tr><td colspan="6" class="muted">' + (treeSq ? 'Tidak ada pohon yang cocok dengan "' + U.escapeHtml(treeSq) + '".' : "Belum ada data pohon pada daftar ini.") + '</td></tr>') +
+                '<tr><td colspan="8" class="muted">' + (treeSq ? 'Tidak ada pohon yang cocok dengan "' + U.escapeHtml(treeSq) + '".' : "Belum ada data pohon pada daftar ini.") + '</td></tr>') +
             '</tbody>' +
           '</table>' +
           (filteredTrees.length > TREES_PER_PAGE ? '<div class="pagination">' +
@@ -293,6 +294,8 @@
       '<td><strong>' + U.escapeHtml(tree.treeNumber) + '</strong></td>' +
       '<td>' + U.escapeHtml(species && species.name || "-") + '</td>' +
       '<td class="numeric">' + U.formatNumber(tree.circumference, 2) + '</td>' +
+      '<td class="numeric">' + U.formatNumber(tree.diameter || 0, 2) + '</td>' +
+      '<td class="numeric">' + U.formatNumber(tree.height || 0, 2) + '</td>' +
       '<td class="numeric">' + U.formatNumber(tree.volume, 4) + '</td>' +
       '<td>' + U.escapeHtml(tree.note || "-") + '</td>' +
       '<td><button class="row-delete" type="button" data-action="delete-tree" data-clamp-id="' + clamp.id + '" data-tree-id="' + tree.id + '">' +
@@ -305,15 +308,21 @@
     var speciesId = form.elements && form.elements.speciesId && form.elements.speciesId.value;
     var circumference = Number(form.elements && form.elements.circumference && form.elements.circumference.value);
     var volInput = form.elements && form.elements.volume;
+    var diameterInput = form.elements && form.elements.diameter;
+    var heightInput = form.elements && form.elements.height;
     var help = form.querySelector && form.querySelector('[data-role="volume-help"]');
     if (!volInput || !help) return;
     var lookup = App.tvl && App.tvl.lookupVolume(speciesId, circumference);
     if (!lookup) {
       volInput.value = "0,0000";
-      help.textContent = "Masukkan keliling untuk membaca TVL.";
+      if (diameterInput) diameterInput.value = "0,00";
+      if (heightInput) heightInput.value = "0,00";
+      help.textContent = "Masukkan keliling untuk menghitung volume.";
       return;
     }
     volInput.value = U.formatNumber(lookup.volume, 4);
+    if (diameterInput) diameterInput.value = U.formatNumber(lookup.diameter, 2);
+    if (heightInput) heightInput.value = U.formatNumber(lookup.height, 2);
     help.textContent = "";
   }
 
@@ -326,34 +335,47 @@
     var circumfs = state.clamps && state.clamps.reduce ? state.clamps.reduce(function(acc, c) {
       return acc.concat((c.trees || []).map(function(t) { return Number(t.circumference); }));
     }, []) : [];
+    var diameters = state.clamps && state.clamps.reduce ? state.clamps.reduce(function(acc, c) {
+      return acc.concat((c.trees || []).map(function(t) { return Number(t.diameter || 0); }));
+    }, []) : [];
+    var heights = state.clamps && state.clamps.reduce ? state.clamps.reduce(function(acc, c) {
+      return acc.concat((c.trees || []).map(function(t) { return Number(t.height || 0); }));
+    }, []) : [];
     var avgCirc = circumfs.length ? U.sum(circumfs, function(v) { return v; }) / circumfs.length : 0;
+    var avgDiam = diameters.length ? U.sum(diameters, function(v) { return v; }) / diameters.length : 0;
+    var avgHeight = heights.length ? U.sum(heights, function(v) { return v; }) / heights.length : 0;
 
     _el["summary-cards"].innerHTML = [
       ["Daftar Klem", state.clamps && state.clamps.length || 0, "Daftar Tersimpan"],
       ["Jumlah Batang", totalTrees, "Seluruh Daftar"],
       ["Rata-rata Keliling", U.formatNumber(avgCirc, 2) + " cm", "Seluruh Batang"],
+      ["Rata-rata Diameter", U.formatNumber(avgDiam, 2) + " cm", "Seluruh Batang"],
+      ["Rata-rata Tinggi", U.formatNumber(avgHeight, 2) + " m", "Seluruh Batang"],
       ["Total Volume", U.formatNumber(totalVol, 4) + " m³", "Seluruh Daftar"]
     ].map(function(row) {
       return '<article class="summary-card"><span>' + row[0] + '</span><strong>' + row[1] + '</strong><small>' + row[2] + '</small></article>';
     }).join("");
 
     if (!state.clamps || !state.clamps.length) {
-      _el["recap-body"].innerHTML = '<tr><td colspan="7" class="muted">Belum ada daftar klem untuk direkap.</td></tr>';
+      _el["recap-body"].innerHTML = '<tr><td colspan="9" class="muted">Belum ada daftar klem untuk direkap.</td></tr>';
       return;
     }
     _el["recap-body"].innerHTML = state.clamps.map(function(clamp) {
-      var avg = (clamp.trees && clamp.trees.length)
-        ? U.sum(clamp.trees, function(t) { return t.circumference; }) / clamp.trees.length
-        : 0;
-      var tot = U.sum(clamp.trees || [], function(t) { return t.volume; });
+      var trees = clamp.trees || [];
+      var avgCirc = trees.length ? U.sum(trees, function(t) { return t.circumference; }) / trees.length : 0;
+      var avgDiam = trees.length ? U.sum(trees, function(t) { return t.diameter || 0; }) / trees.length : 0;
+      var avgHeight = trees.length ? U.sum(trees, function(t) { return t.height || 0; }) / trees.length : 0;
+      var tot = U.sum(trees, function(t) { return t.volume; });
       var sp = App.storage.getSpecies(clamp.speciesId);
       return '<tr>' +
         '<td><strong>' + U.escapeHtml(clamp.code) + '</strong><br><span class="muted">Blok ' + U.escapeHtml(clamp.block) + ' · Petak ' + U.escapeHtml(clamp.compartment) + '</span></td>' +
         '<td>' + U.escapeHtml(clamp.bkph) + ' / ' + U.escapeHtml(clamp.rph) + '</td>' +
         '<td>' + U.escapeHtml(sp && sp.name || "-") + '</td>' +
         '<td>' + (clamp.plantingYear || "-") + '</td>' +
-        '<td class="numeric">' + U.formatNumber(avg, 2) + ' cm</td>' +
-        '<td class="numeric">' + (clamp.trees && clamp.trees.length || 0) + '</td>' +
+        '<td class="numeric">' + U.formatNumber(avgCirc, 2) + ' cm</td>' +
+        '<td class="numeric">' + U.formatNumber(avgDiam, 2) + ' cm</td>' +
+        '<td class="numeric">' + U.formatNumber(avgHeight, 2) + ' m</td>' +
+        '<td class="numeric">' + (trees.length || 0) + '</td>' +
         '<td class="numeric">' + U.formatNumber(tot, 4) + ' m³</td>' +
       '</tr>';
     }).join("");
@@ -388,10 +410,10 @@
     var state = App.storage.state;
     var clamp = (state.clamps || []).find(function(c) { return c.id === clampId; });
     if (!clamp || !(clamp.trees && clamp.trees.length)) return;
-    var data = [["No Pohon", "Jenis", "Keliling (cm)", "Volume (m3)", "Keterangan"]];
+    var data = [["No Pohon", "Jenis", "Keliling (cm)", "Diameter (cm)", "Tinggi (m)", "Volume (m3)", "Keterangan"]];
     clamp.trees.forEach(function(t) {
       var sp = App.storage.getSpecies(t.speciesId);
-      data.push([t.treeNumber, (sp && sp.name) || "", Number(t.circumference).toFixed(2), Number(t.volume).toFixed(4), t.note || ""]);
+      data.push([t.treeNumber, (sp && sp.name) || "", Number(t.circumference).toFixed(2), Number(t.diameter || 0).toFixed(2), Number(t.height || 0).toFixed(2), Number(t.volume).toFixed(4), t.note || ""]);
     });
     var safeCode = (clamp.code || "daftar-klem").replace(/[^a-z0-9_-]+/gi, "-");
     U.downloadBlob(U.dataToExcel(data), safeCode + "-data-pohon-" + U.dateStamp() + ".xls", "application/vnd.ms-excel;charset=utf-8");
@@ -400,15 +422,18 @@
   function exportRecapCsv() {
     var state = App.storage.state;
     if (!state.clamps || !state.clamps.length) return;
-    var data = [["Daftar Klem", "BKPH", "RPH", "Blok", "Petak", "Jenis Utama", "Tahun Tanam", "Rata-rata Keliling (cm)", "Jumlah Batang", "Total Volume (m3)"]];
+    var data = [["Daftar Klem", "BKPH", "RPH", "Blok", "Petak", "Jenis Utama", "Tahun Tanam", "Rata-rata Keliling (cm)", "Rata-rata Diameter (cm)", "Rata-rata Tinggi (m)", "Jumlah Batang", "Total Volume (m3)"]];
     state.clamps.forEach(function(clamp) {
-      var avg = (clamp.trees && clamp.trees.length)
-        ? U.sum(clamp.trees, function(t) { return t.circumference; }) / clamp.trees.length : 0;
+      var trees = clamp.trees || [];
+      var avgCirc = trees.length ? U.sum(trees, function(t) { return t.circumference; }) / trees.length : 0;
+      var avgDiam = trees.length ? U.sum(trees, function(t) { return t.diameter || 0; }) / trees.length : 0;
+      var avgHeight = trees.length ? U.sum(trees, function(t) { return t.height || 0; }) / trees.length : 0;
       var sp = App.storage.getSpecies(clamp.speciesId);
       data.push([clamp.code, clamp.bkph, clamp.rph, clamp.block, clamp.compartment,
         (sp && sp.name) || "", clamp.plantingYear || "",
-        avg.toFixed(2), (clamp.trees && clamp.trees.length) || 0,
-        U.sum(clamp.trees || [], function(t) { return t.volume; }).toFixed(4)
+        avgCirc.toFixed(2), avgDiam.toFixed(2), avgHeight.toFixed(2),
+        trees.length || 0,
+        U.sum(trees, function(t) { return t.volume; }).toFixed(4)
       ]);
     });
     U.downloadBlob(U.dataToExcel(data), "rekap-klem-" + U.dateStamp() + ".xls", "application/vnd.ms-excel;charset=utf-8");
@@ -417,7 +442,6 @@
   // ---- Full render ----
   function renderAll() {
     renderTvlSelect();
-    renderTvlPreview();
     renderSpecies();
     renderClampSpeciesSelect();
     renderClamps();
@@ -436,7 +460,6 @@
     closeSidebar: closeSidebar,
     closeModal: closeModal,
     renderTvlSelect: renderTvlSelect,
-    renderTvlPreview: renderTvlPreview,
     renderSpecies: renderSpecies,
     renderClampSpeciesSelect: renderClampSpeciesSelect,
     renderClamps: renderClamps,

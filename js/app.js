@@ -30,6 +30,13 @@ function init() {
 
   // 5. Load TVL data
   App.tvl.loadBuiltinTvls().then(function() {
+    // Hide loading overlay
+    var loader = document.getElementById("app-loader");
+    if (loader) {
+      loader.classList.add("hidden");
+      setTimeout(function() { loader.style.display = "none"; }, 450);
+    }
+
     // 6. Initial render
     App.components.renderAll();
     App.pwa.updateConnectivity();

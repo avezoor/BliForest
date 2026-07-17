@@ -1,4 +1,4 @@
-const CACHE_NAME = "klem-kayu-v11-tvl-folder-2026.07.17.1";
+const CACHE_NAME = "BliForest";
 const CORE_FILES = [
   "./",
   "./index.html",
@@ -22,7 +22,7 @@ const CORE_FILES = [
   "./icons/favicon/favicon.svg",
   "./data/bkph.json",
   "./data/bkph-bundle.js",
-  "./data/tvl-bundle.js"
+  "./data/tvl-index.json"
 ];
 
 const TVL_FILES = [
@@ -32,8 +32,8 @@ const TVL_FILES = [
   "./data/tvl/tvl_pinus.json",
   "./data/tvl/tvl_damar.json",
   "./data/tvl/tvl_maesosis.json",
-  "./data/tvl/tvl_acc_mangium.json",
-  "./data/tvl/tvl_acc_au.json",
+  "./data/tvl/tvl_akasia_mangium.json",
+  "./data/tvl/tvl_akasia_au.json",
   "./data/tvl/tvl_johar.json",
   "./data/tvl/tvl_lokes.json",
   "./data/tvl/tvl_eupcaliptus.json",
@@ -65,10 +65,43 @@ self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
 
   const url = new URL(event.request.url);
-  const isDataJson = url.pathname.includes("/data/") && url.pathname.endsWith(".json");
+  const isTvlJson = url.pathname.includes("/data/tvl/") && url.pathname.endsWith(".json");
 
-  // Jangan cache file JSON di data/ - simpan di localStorage saja
-  if (isDataJson) return;
+  // TVL JSON: cache-first saat offline, network-fresh saat online (biar selalu update saat online)
+  // Tidak perlu cache busting manual karena fetchJson sudah handle ?refresh=...
+  if (isTvlJson) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        if (response && response.status === 200) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+        }
+        return response;
+      }).catch(() => {
+        // Offline: serve dari cache
+        return caches.match(event.request);
+      })
+    );
+    return;
+  }
+
+  // BKPH JSON: cache-first (jarang berubah)
+  const isBkphJson = url.pathname.includes("/data/") && url.pathname.endsWith(".json");
+  if (isBkphJson) {
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        return fetch(event.request).then(response => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
 
   if (event.request.mode === "navigate") {
     event.respondWith(

@@ -1,83 +1,22 @@
 {
-  "schemaVersion": 1,
-  "version": "2026.07.16.1",
-  "updatedAt": "2026-07-16T10:34:37+07:00",
+  "version": "2026.07.17.1",
+  "updatedAt": "2026-07-17T00:00:00+07:00",
   "source": "TVL Blitar, KPH Blitar",
   "files": [
-    {
-      "file": "tvl/tvl_jati.json",
-      "version": "2026.07.16.1",
-      "sha256": "603f0d74fb6af5c38dcbb8a502c78c9f7b81be521e3149d4bcc948b11ab1a520"
-    },
-    {
-      "file": "tvl/tvl_sengon.json",
-      "version": "2026.07.16.1",
-      "sha256": "79bb55723ae85af6e9ed38261a5c2e8b3ca72deade018b673a4e2c083c95689b"
-    },
-    {
-      "file": "tvl/tvl_mahoni.json",
-      "version": "2026.07.16.1",
-      "sha256": "a41244b88638e29468e87cdc8f281c256631efe1ca9a58f35cd3ee8a02e12e66"
-    },
-    {
-      "file": "tvl/tvl_pinus.json",
-      "version": "2026.07.16.1",
-      "sha256": "e0c11eb7b7354c7a4d5296880036821f2c8f8e6d375e20e4ccf697d7289536f7"
-    },
-    {
-      "file": "tvl/tvl_damar.json",
-      "version": "2026.07.16.1",
-      "sha256": "953f0dbb8fb73f628741ac2b6c549d6a3b10ad4c03775da3415c6647b5a7ca5e"
-    },
-    {
-      "file": "tvl/tvl_maesosis.json",
-      "version": "2026.07.16.1",
-      "sha256": "5988bff7c693a8e3cbedf436f7eecf1b89844e093f3b9dc2c85a9cf102b740b9"
-    },
-    {
-      "file": "tvl/tvl_acc_mangium.json",
-      "version": "2026.07.16.1",
-      "sha256": "53c81eba30585934d529ec2398c4f531489553faa7ed5b70011c65dfed9ebc2c"
-    },
-    {
-      "file": "tvl/tvl_acc_au.json",
-      "version": "2026.07.16.1",
-      "sha256": "5ff8ec78800f06920b50f490173d95569b794c029f6a2b1a2602364dbebc018d"
-    },
-    {
-      "file": "tvl/tvl_johar.json",
-      "version": "2026.07.16.1",
-      "sha256": "94736bce525d1a3c0b0853a30ac86a769545c3a51e6a664290eae214f0fab77e"
-    },
-    {
-      "file": "tvl/tvl_lokes.json",
-      "version": "2026.07.16.1",
-      "sha256": "c7936abff2447a4d2bd58c3da1823d293c92ba533d17436fa31a3283022329be"
-    },
-    {
-      "file": "tvl/tvl_eupcaliptus.json",
-      "version": "2026.07.16.1",
-      "sha256": "a82c9a7c25f1e5ad2e6d53c4fdea65d0eb249c0d423859e6efa63b00ad25c0c5"
-    },
-    {
-      "file": "tvl/tvl_mindi.json",
-      "version": "2026.07.16.1",
-      "sha256": "4219a1d90743e956fc48b71d4a585042391fc0994d92ca4214850b3e72a4e31d"
-    },
-    {
-      "file": "tvl/tvl_flamboyan.json",
-      "version": "2026.07.16.1",
-      "sha256": "a90a4ed0f96186da1ee2acd7d0cfab76b66115f9b41029527b4c9e06abaedd76"
-    },
-    {
-      "file": "tvl/tvl_gemilina.json",
-      "version": "2026.07.16.1",
-      "sha256": "430be3d82cd1d2a50a5029ba9462275fb67b21e1d4ef66eb4c95ac1e12687a73"
-    },
-    {
-      "file": "tvl/tvl_sonokeling.json",
-      "version": "2026.07.16.1",
-      "sha256": "91c4b430e0fdd3ca71d93368691176d195418214996378870a59f5287524f310"
-    }
+    "tvl/tvl_jati.json",
+    "tvl/tvl_sengon.json",
+    "tvl/tvl_mahoni.json",
+    "tvl/tvl_pinus.json",
+    "tvl/tvl_damar.json",
+    "tvl/tvl_maesosis.json",
+    "tvl/tvl_akasia_mangium.json",
+    "tvl/tvl_akasia_au.json",
+    "tvl/tvl_johar.json",
+    "tvl/tvl_lokes.json",
+    "tvl/tvl_eupcaliptus.json",
+    "tvl/tvl_mindi.json",
+    "tvl/tvl_flamboyan.json",
+    "tvl/tvl_gemilina.json",
+    "tvl/tvl_sonokeling.json"
   ]
 }

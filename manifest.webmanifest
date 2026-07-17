@@ -1,18 +1,12 @@
 {
-  "id": "./",
   "name": "BliForest",
   "short_name": "BliForest",
-  "description": "Progressive Web App",
-  "lang": "id-ID",
-  "dir": "ltr",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
   "orientation": "any",
   "background_color": "#f3f5ef",
   "theme_color": "#125e3d",
-  "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
       "src": "icons/pwa/icon-192.png",

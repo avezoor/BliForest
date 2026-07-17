@@ -27,10 +27,41 @@
 }
 
 * { box-sizing: border-box; }
-html { min-height: 100%; background: var(--bg); }
-body { margin: 0; min-height: 100vh; background: var(--bg); }
+html { min-height: 100%; background: var(--bg); overflow-x: hidden; }
+body { margin: 0; min-height: 100vh; background: var(--bg); overflow-x: hidden; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 .is-hidden { display: none !important; }
 
 .eyebrow, .section-label { margin: 0 0 6px; color: var(--green-700); font-size: 11px; font-weight: 800; letter-spacing: .14em; }
+
+/* ============================================================
+   App Loading Overlay
+   ============================================================ */
+#app-loader {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity .4s ease;
+}
+#app-loader.hidden {
+  opacity: 0; pointer-events: none;
+}
+.loader-inner {
+  text-align: center;
+}
+.loader-inner img {
+  animation: pulse 1.4s ease-in-out infinite;
+  border-radius: 14px;
+  display: block; margin: 0 auto 14px;
+}
+.loader-text {
+  margin: 0 0 6px; font-size: 17px; font-weight: 750; color: var(--ink);
+}
+.loader-sub {
+  margin: 0; font-size: 13px; color: var(--muted);
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.06); opacity: .85; }
+}

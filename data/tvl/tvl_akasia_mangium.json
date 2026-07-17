@@ -1,10 +1,10 @@
 {
-  "id": "tvl_eupcaliptus",
-  "name": "TVL Eupcaliptus - Blitar",
-  "species": "Eupcaliptus",
-  "normalizedSpecies": "Eucalyptus",
+  "id": "tvl_akasia_mangium",
+  "name": "TVL Akasia Mangium - Blitar",
+  "species": "Akasia Mangium",
+  "normalizedSpecies": "Acacia mangium",
   "version": "2026.07.16.1",
-  "updatedAt": "2026-07-17T12:53:08.928Z",
+  "updatedAt": "2026-07-17T12:53:08.922Z",
   "model": "berkhout",
   "formula": {
     "volume": "V = a * K^b * f",

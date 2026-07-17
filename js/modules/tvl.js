@@ -1,44 +1,200 @@
 "use strict";
 
 // ============================================================
-// TVL Data Module
+// TVL Data Module (Berkhout Formula)
+// ============================================================
+// Volume = a * K^b * factor
+// Diameter = K / π
+// Height = (40000 * π * a * K^(b-2)) / factor_correction
 // ============================================================
 
 (function(global) {
   var App = global.App || {};
   var TVL_INDEX_PATH = global.TVL_INDEX_PATH;
   var FALLBACK_TVL_FILES = global.FALLBACK_TVL_FILES;
+  var TVL_REMOTE_BASE = global.TVL_REMOTE_BASE || "";
 
-  // ---- Fetch JSON ----
+  // Math constants
+  var PI = Math.PI;
+  var MATH_40000_PI = 40000 * PI;
+
+  // ---- Calculate volume using berkhout formula ----
+  function calculateVolume(tvl, circumference) {
+    if (!tvl || !tvl.coefficients || !Number.isFinite(circumference)) return null;
+    var a = tvl.coefficients.a;
+    var b = tvl.coefficients.b;
+    var factor = tvl.coefficients.factor || 1;
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+    return a * Math.pow(circumference, b) * factor;
+  }
+
+  // ---- Calculate diameter using keliling ----
+  function calculateDiameter(tvl, circumference) {
+    if (!Number.isFinite(circumference)) return null;
+    return circumference / PI;
+  }
+
+  // ---- Calculate height using berkhout formula ----
+  function calculateHeight(tvl, circumference) {
+    if (!tvl || !tvl.coefficients || !Number.isFinite(circumference)) return null;
+    var a = tvl.coefficients.a;
+    var b = tvl.coefficients.b;
+    var factor_correction = tvl.coefficients.factor_correction || 1;
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+    return (MATH_40000_PI * a * Math.pow(circumference, b - 2)) / factor_correction;
+  }
+
+  // ---- Calculate all tree metrics ----
+  function calculateTreeMetrics(tvl, circumference) {
+    var volume = calculateVolume(tvl, circumference);
+    var diameter = calculateDiameter(tvl, circumference);
+    var height = calculateHeight(tvl, circumference);
+    return {
+      volume: volume,
+      diameter: diameter,
+      height: height,
+      circumference: circumference
+    };
+  }
+
+  // ---- Fetch JSON (offline-aware: check connectivity first, then appropriate fetch) ----
   function fetchJson(path, fresh) {
-    var url = fresh
-      ? path + (path.indexOf("?") !== -1 ? "&" : "?") + "refresh=" + Date.now() + "-" + Math.random().toString(16).slice(2)
-      : path;
-    return fetch(url, {
-      cache: fresh ? "no-store" : "default",
-      headers: fresh ? { "Cache-Control": "no-cache" } : undefined
-    }).then(function(r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
+    var isOnline = navigator.onLine;
+
+    // Convert to GitHub raw URL for TVL files if online
+    var remotePath = path;
+    if (TVL_REMOTE_BASE && (path.indexOf("data/tvl/") !== -1 || path.indexOf("tvl-index") !== -1)) {
+      var filename = path.split("/").pop();
+      remotePath = TVL_REMOTE_BASE + "/" + filename;
+    }
+
+    // ---- OFFLINE path ----
+    if (!isOnline) {
+      // Try SW cache first (PWA pre-cached), then localStorage
+      return caches.match(remotePath).then(function(cached) {
+        if (cached) return cached.json();
+        return caches.match(path).then(function(c) { return c ? c.json() : null; });
+      }).then(function(result) {
+        if (result) return result;
+        // No SW cache: try localStorage
+        return getLocalStorageTvl(path);
+      }).then(function(result) {
+        if (result) return result;
+        // No localStorage either: load from local files via fetch
+        return fetch(path).then(function(r) { return r ? r.json() : null; }).catch(function() { return null; });
+      });
+    }
+
+    // ---- ONLINE path ----
+    if (fresh) {
+      // Force fresh: network only, bust cache, fallback to offline sources
+      var url = remotePath + (remotePath.indexOf("?") !== -1 ? "&" : "?") + "refresh=" + Date.now() + "-" + Math.random().toString(16).slice(2);
+      return fetch(url, { cache: "no-store", headers: { "Cache-Control": "no-cache" } })
+        .then(function(r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        })
+        .catch(function() {
+          // Network failed: try SW cache → localStorage
+          return caches.match(remotePath).then(function(cached) { return cached ? cached.json() : null; })
+            .then(function(result) { return result || getLocalStorageTvl(path); })
+            .then(function(result) {
+              if (result) return result;
+              return caches.match(path).then(function(c) { return c ? c.json() : null; });
+            });
+        });
+    }
+
+    // Normal load online: SW cache → network (SW auto-caches)
+    return caches.match(remotePath).then(function(cached) {
+      if (cached) return cached.json();
+      return fetch(remotePath).then(function(r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      }).catch(function() {
+        // Network failed: try localStorage
+        return getLocalStorageTvl(path);
+      });
     });
   }
 
-  // ---- TVL signature ----
+  // ---- localStorage TVL cache helpers ----
+  function getLocalStorageTvl(path) {
+    try {
+      var key = "tvl_raw_" + path.split("/").pop().replace(".json", "");
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function setLocalStorageTvl(path, json) {
+    try {
+      var key = "tvl_raw_" + path.split("/").pop().replace(".json", "");
+      localStorage.setItem(key, JSON.stringify(json));
+    } catch (e) {}
+  }
+
+  function cacheTvlToLocalStorage(path, json) {
+    setLocalStorageTvl(path, json);
+  }
+
+  // ---- TVL signature (for change detection) ----
   function tvlSignature(tvl) {
+    if (!tvl) return "";
+    // For berkhout model, signature includes coefficients
+    if (tvl.model === "berkhout") {
+      return JSON.stringify({
+        id: tvl.id || "",
+        name: tvl.name || "",
+        species: tvl.species || "",
+        version: tvl.version || "",
+        updatedAt: tvl.updatedAt || "",
+        model: tvl.model,
+        coefficients: tvl.coefficients
+      });
+    }
+    // Legacy format with entries
     return JSON.stringify({
       id: tvl && tvl.id || "",
       name: tvl && tvl.name || "",
       species: tvl && tvl.species || "",
-      source: tvl && tvl.source || "",
       version: tvl && tvl.version || "",
       updatedAt: tvl && tvl.updatedAt || "",
       entries: Array.isArray(tvl && tvl.entries) ? tvl.entries : []
     });
   }
 
-  // ---- Normalize TVL from raw JSON ----
+  // ---- Normalize TVL from raw JSON (Berkhout format) ----
   function normalizeTvl(raw, filename) {
     filename = filename || "tvl.json";
+
+    // Check if TVL uses berkhout model (no entries array)
+    var isBerkhout = raw && raw.model === "berkhout";
+
+    if (isBerkhout) {
+      return {
+        id: String(raw.id || "").trim() || ("tvl_" + Date.now()),
+        name: String(raw.name || raw.title || "TVL").trim(),
+        species: String(raw.species || "").trim(),
+        normalizedSpecies: String(raw.normalizedSpecies || "").trim(),
+        version: String(raw.version || "").trim() || null,
+        updatedAt: String(raw.updatedAt || "").trim() || null,
+        model: "berkhout",
+        formula: raw.formula || {},
+        coefficients: {
+          a: Number(raw.coefficients && raw.coefficients.a) || 0,
+          b: Number(raw.coefficients && raw.coefficients.b) || 0,
+          factor: Number(raw.coefficients && raw.coefficients.factor) || 1,
+          factor_correction: Number(raw.coefficients && raw.coefficients.factor_correction) || 1
+        },
+        K: raw.K || { unit: "cm" },
+        diameter: raw.diameter || { unit: "cm" },
+        height: raw.height || { unit: "m" },
+        volume: raw.volume || { unit: "m3" }
+      };
+    }
+
+    // Legacy format with entries array (table lookup)
     var sourceRows;
     if (Array.isArray(raw)) {
       sourceRows = raw;
@@ -70,9 +226,9 @@
       id: id,
       name: name,
       species: String(raw && raw.species || raw && raw.jenis || "").trim(),
+      normalizedSpecies: String(raw && raw.normalizedSpecies || "").trim(),
       unitCircumference: "cm",
       unitVolume: "m3",
-      source: String(raw && raw.source || raw && raw.sumber || "Impor lokal").trim(),
       version: String(raw && (raw.version || raw.revision) || "").trim() || null,
       updatedAt: String(raw && (raw.updatedAt || raw.updated_at) || "").trim() || null,
       entries: entries
@@ -86,7 +242,15 @@
     source.forEach(function(raw, index) {
       try {
         var tvl = normalizeTvl(raw, "tvl-bundle-" + (index + 1) + ".json");
-        if (tvl.entries.length) loaded[tvl.id] = tvl;
+        // For berkhout model, we need coefficients
+        if (tvl.model === "berkhout") {
+          if (tvl.coefficients && tvl.coefficients.a && tvl.coefficients.b) {
+            loaded[tvl.id] = tvl;
+          }
+        } else if (tvl.entries && tvl.entries.length) {
+          // Legacy format needs entries
+          loaded[tvl.id] = tvl;
+        }
       } catch (e) { /* skip invalid */ }
     });
     return loaded;
@@ -119,7 +283,32 @@
 
   // ---- Load manifest ----
   function loadTvlManifest(fresh) {
-    return fetchJson(TVL_INDEX_PATH, fresh).then(function(raw) {
+    // If offline, skip network fetch entirely and use local manifest or fallback
+    if (!navigator.onLine && !fresh) {
+      return caches.match("data/tvl-index.json").then(function(cached) {
+        if (cached) return cached.json();
+        // No local manifest: use fallback files list directly
+        return null;
+      }).then(function(raw) {
+        if (raw) {
+          var items = Array.isArray(raw) ? raw : (raw && raw.files) || [];
+          var files = items.map(function(item) {
+            return typeof item === "string" ? item : (item && item.file);
+          }).filter(Boolean);
+          return { version: null, updatedAt: null, files: files };
+        }
+        // Fallback: map old manifest names to current filenames
+        return {
+          version: null, updatedAt: null,
+          files: FALLBACK_TVL_FILES.map(function(f) { return f.replace("data/", ""); })
+        };
+      });
+    }
+
+    var manifestPath = TVL_REMOTE_BASE
+      ? TVL_REMOTE_BASE.replace("/tvl", "/tvl-index.json").replace("/data/tvl", "/data/tvl-index.json")
+      : TVL_INDEX_PATH;
+    return fetchJson(manifestPath, fresh).then(function(raw) {
       var items = Array.isArray(raw) ? raw : (raw && raw.files) || [];
       if (!items.length) throw new Error("Indeks TVL kosong");
       var version = Array.isArray(raw) ? null : String(raw.version || raw.indexVersion || "").trim() || null;
@@ -131,7 +320,7 @@
     }).catch(function(e) {
       if (fresh) throw e;
       console.warn("Indeks TVL tidak dapat dimuat:", e);
-      return { version: null, updatedAt: null, files: FALLBACK_TVL_FILES };
+      return { version: null, updatedAt: null, files: FALLBACK_TVL_FILES.map(function(f) { return f.replace("data/", ""); }) };
     });
   }
 
@@ -139,14 +328,30 @@
     var state = App.storage.state;
     var loaded = {};
     var promises = manifest.files.map(function(file) {
-      var path = file.indexOf("data/") === 0 ? file : ("data/" + file);
-      return fetchJson(path, fresh).then(function(raw) {
-        var tvl = normalizeTvl(raw, path.split("/").pop());
-        if (!tvl.entries.length) throw new Error("TVL tidak memiliki baris yang valid");
+      // Normalize filename: manifest may have old names, map to actual local files
+      var filename = file.split("/").pop();
+      // Map old acc_* names to akasia_*
+      filename = filename.replace("tvl_acc_mangium", "tvl_akasia_mangium")
+                         .replace("tvl_acc_au", "tvl_akasia_au");
+      var localPath = "data/" + filename;
+      var remotePath = TVL_REMOTE_BASE ? (TVL_REMOTE_BASE + "/" + filename) : localPath;
+
+      return fetchJson(remotePath, fresh).then(function(raw) {
+        var tvl = normalizeTvl(raw, filename);
+        // Validate TVL
+        if (tvl.model === "berkhout") {
+          if (!tvl.coefficients || !tvl.coefficients.a || !tvl.coefficients.b) {
+            throw new Error("TVL berkhout tidak memiliki koefisien yang valid");
+          }
+        } else if (!tvl.entries || !tvl.entries.length) {
+          throw new Error("TVL tidak memiliki baris yang valid");
+        }
         loaded[tvl.id] = tvl;
+        // Cache raw JSON to localStorage for offline use
+        cacheTvlToLocalStorage(localPath, raw);
       }).catch(function(e) {
-        if (fresh) throw new Error("Gagal mengambil " + path + ": " + e.message);
-        console.warn("Gagal memuat " + path + ":", e);
+        if (fresh) throw new Error("Gagal mengambil " + filename + ": " + e.message);
+        console.warn("Gagal memuat " + filename + ":", e);
       });
     });
     return Promise.all(promises).then(function() { return loaded; });
@@ -173,12 +378,30 @@
     });
   }
 
-  // ---- Volume lookup ----
+  // ---- Volume lookup (supports both legacy and berkhout) ----
   function lookupVolume(speciesId, circumference) {
     if (!speciesId || !Number.isFinite(circumference) || circumference < 0) return null;
     var species = App.storage.getSpecies(speciesId);
     var tvl = species ? App.storage.state.tvls[species.tvlId] : null;
-    if (!tvl || !tvl.entries || !tvl.entries.length) return null;
+    if (!tvl) return null;
+
+    // Check if TVL uses berkhout model
+    if (tvl.model === "berkhout") {
+      var volume = calculateVolume(tvl, circumference);
+      var diameter = calculateDiameter(tvl, circumference);
+      var height = calculateHeight(tvl, circumference);
+      if (volume === null) return null;
+      return {
+        volume: volume,
+        diameter: diameter,
+        height: height,
+        circumference: circumference,
+        exact: true
+      };
+    }
+
+    // Legacy table lookup
+    if (!tvl.entries || !tvl.entries.length) return null;
     var nearest = tvl.entries[0];
     for (var i = 0; i < tvl.entries.length; i++) {
       var row = tvl.entries[i];
@@ -188,6 +411,8 @@
     }
     return {
       volume: Number(nearest.volume),
+      diameter: calculateDiameter(tvl, circumference),
+      height: calculateHeight(tvl, circumference),
       matchedCircumference: Number(nearest.circumference),
       exact: Math.abs(nearest.circumference - circumference) < 1e-9
     };
@@ -212,15 +437,26 @@
 
         result.totalBefore += before;
         result.totalAfter += lookup.volume;
+
+        var tvl = state.tvls[tvlId];
+        var isBerkhout = tvl && tvl.model === "berkhout";
+
         var changed = Math.abs(before - lookup.volume) > 1e-12 ||
-          Number(tree.tvlCircumference) !== Number(lookup.matchedCircumference) ||
+          (isBerkhout ? false : (Number(tree.tvlCircumference) !== Number(lookup.matchedCircumference))) ||
           tree.tvlId !== tvlId;
 
         tree.volume = lookup.volume;
-        tree.tvlCircumference = lookup.matchedCircumference;
+        tree.tvlCircumference = isBerkhout ? tree.circumference : lookup.matchedCircumference;
         tree.tvlId = tvlId;
         tree.tvlVersion = (state.tvls[tvlId] && state.tvls[tvlId].version) || (state.tvlSync && state.tvlSync.indexVersion) || null;
         tree.volumeUpdatedAt = updatedAt;
+
+        // Save diameter and height for berkhout model
+        if (isBerkhout) {
+          tree.diameter = lookup.diameter;
+          tree.height = lookup.height;
+        }
+
         if (changed) result.updated++; else result.unchanged++;
       });
     });
@@ -294,7 +530,16 @@
     return file.text().then(function(text) {
       var raw = JSON.parse(text);
       var tvl = normalizeTvl(raw, file.name);
-      if (!tvl.entries.length) throw new Error("TVL tidak memiliki pasangan keliling dan volume yang valid.");
+
+      // Validate imported TVL
+      if (tvl.model === "berkhout") {
+        if (!tvl.coefficients || !tvl.coefficients.a || !tvl.coefficients.b) {
+          throw new Error("TVL berkhout tidak memiliki koefisien a dan b yang valid.");
+        }
+      } else if (!tvl.entries || !tvl.entries.length) {
+        throw new Error("TVL tidak memiliki pasangan keliling dan volume yang valid.");
+      }
+
       var state = App.storage.state;
       var changed = !state.tvls[tvl.id] || tvlSignature(state.tvls[tvl.id]) !== tvlSignature(tvl);
       state.tvls[tvl.id] = tvl;
@@ -303,6 +548,12 @@
       return { tvl: tvl, changed: changed, calculation: calc };
     });
   }
+
+  // ---- Expose calculation functions ----
+  App.tvl.calculateVolume = calculateVolume;
+  App.tvl.calculateDiameter = calculateDiameter;
+  App.tvl.calculateHeight = calculateHeight;
+  App.tvl.calculateTreeMetrics = calculateTreeMetrics;
 
   App.tvl = {
     tvlSignature: tvlSignature,
@@ -313,7 +564,12 @@
     lookupVolume: lookupVolume,
     recalculateTreeVolumes: recalculateTreeVolumes,
     importTvlFromFile: importTvlFromFile,
-    replaceTvls: replaceTvls
+    replaceTvls: replaceTvls,
+    // Expose calculation functions
+    calculateVolume: calculateVolume,
+    calculateDiameter: calculateDiameter,
+    calculateHeight: calculateHeight,
+    calculateTreeMetrics: calculateTreeMetrics
   };
 
   global.App = App;
