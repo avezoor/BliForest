@@ -45,6 +45,20 @@ const TVL_FILES = [
 
 const ALL_FILES = CORE_FILES.concat(TVL_FILES);
 
+// Timeout helper: 10 detik untuk network request
+async function fetchWithTimeout(request, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(request, { signal: controller.signal });
+    clearTimeout(timeout);
+    return response;
+  } catch (error) {
+    clearTimeout(timeout);
+    throw error;
+  }
+}
+
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
@@ -67,20 +81,22 @@ self.addEventListener("fetch", event => {
   const url = new URL(event.request.url);
   const isTvlJson = url.pathname.includes("/data/tvl/") && url.pathname.endsWith(".json");
 
-  // TVL JSON: cache-first saat offline, network-fresh saat online (biar selalu update saat online)
-  // Tidak perlu cache busting manual karena fetchJson sudah handle ?refresh=...
+  // TVL JSON: network-first saat online (biar selalu update), fallback ke cache jika timeout atau offline
+  // Timeout 10 detik untuk mencegah stuck selamanya
   if (isTvlJson) {
     event.respondWith(
-      fetch(event.request).then(response => {
-        if (response && response.status === 200) {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-        }
-        return response;
-      }).catch(() => {
-        // Offline: serve dari cache
-        return caches.match(event.request);
-      })
+      fetchWithTimeout(event.request, 10000)
+        .then(response => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => {
+          // Timeout atau offline: serve dari cache
+          return caches.match(event.request);
+        })
     );
     return;
   }
@@ -91,7 +107,7 @@ self.addEventListener("fetch", event => {
     event.respondWith(
       caches.match(event.request).then(cached => {
         if (cached) return cached;
-        return fetch(event.request).then(response => {
+        return fetchWithTimeout(event.request, 10000).then(response => {
           if (response && response.status === 200) {
             const copy = response.clone();
             caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
@@ -105,7 +121,7 @@ self.addEventListener("fetch", event => {
 
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request)
+      fetchWithTimeout(event.request, 10000)
         .then(response => {
           const copy = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put("./index.html", copy));
@@ -119,7 +135,7 @@ self.addEventListener("fetch", event => {
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
-      return fetch(event.request).then(response => {
+      return fetchWithTimeout(event.request, 10000).then(response => {
         if (!response || response.status !== 200 || response.type === "opaque") return response;
         const copy = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
