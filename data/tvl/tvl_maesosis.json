@@ -1,0 +1,1226 @@
+{
+  "id": "tvl_maesosis",
+  "name": "TVL Maesosis - Blitar",
+  "species": "Maesosis",
+  "normalizedSpecies": "Maesopsis",
+  "version": "2026.07.16.1",
+  "updatedAt": "2026-07-16T10:34:37+07:00",
+  "unitCircumference": "cm",
+  "unitVolume": "m3",
+  "source": "TVL Blitar, KPH Blitar. Sesuai lembar 'TVL': Maesosis menggunakan Pinus. Workbook terakhir disimpan 2023-04-13.",
+  "sourceWorkbook": "TVL Blitar.. (1).xls",
+  "sourceSheet": "Pinus",
+  "mappingRule": "Pinus",
+  "factor": 1.0,
+  "range": {
+    "minimumCircumference": 20,
+    "maximumCircumference": 320,
+    "step": 1
+  },
+  "entries": [
+    {
+      "circumference": 20,
+      "volume": 0.019592497847
+    },
+    {
+      "circumference": 21,
+      "volume": 0.021759394232
+    },
+    {
+      "circumference": 22,
+      "volume": 0.024048283374
+    },
+    {
+      "circumference": 23,
+      "volume": 0.026460019778
+    },
+    {
+      "circumference": 24,
+      "volume": 0.028995425529
+    },
+    {
+      "circumference": 25,
+      "volume": 0.031655292854
+    },
+    {
+      "circumference": 26,
+      "volume": 0.034440386388
+    },
+    {
+      "circumference": 27,
+      "volume": 0.037351445183
+    },
+    {
+      "circumference": 28,
+      "volume": 0.040389184502
+    },
+    {
+      "circumference": 29,
+      "volume": 0.043554297424
+    },
+    {
+      "circumference": 30,
+      "volume": 0.046847456292
+    },
+    {
+      "circumference": 31,
+      "volume": 0.050269314012
+    },
+    {
+      "circumference": 32,
+      "volume": 0.053820505244
+    },
+    {
+      "circumference": 33,
+      "volume": 0.057501647471
+    },
+    {
+      "circumference": 34,
+      "volume": 0.06131334198
+    },
+    {
+      "circumference": 35,
+      "volume": 0.065256174763
+    },
+    {
+      "circumference": 36,
+      "volume": 0.069330717336
+    },
+    {
+      "circumference": 37,
+      "volume": 0.073537527496
+    },
+    {
+      "circumference": 38,
+      "volume": 0.077877150019
+    },
+    {
+      "circumference": 39,
+      "volume": 0.082350117304
+    },
+    {
+      "circumference": 40,
+      "volume": 0.086956949969
+    },
+    {
+      "circumference": 41,
+      "volume": 0.091698157404
+    },
+    {
+      "circumference": 42,
+      "volume": 0.096574238283
+    },
+    {
+      "circumference": 43,
+      "volume": 0.101585681048
+    },
+    {
+      "circumference": 44,
+      "volume": 0.10673296435
+    },
+    {
+      "circumference": 45,
+      "volume": 0.112016557469
+    },
+    {
+      "circumference": 46,
+      "volume": 0.117436920704
+    },
+    {
+      "circumference": 47,
+      "volume": 0.122994505738
+    },
+    {
+      "circumference": 48,
+      "volume": 0.128689755985
+    },
+    {
+      "circumference": 49,
+      "volume": 0.134523106906
+    },
+    {
+      "circumference": 50,
+      "volume": 0.140494986319
+    },
+    {
+      "circumference": 51,
+      "volume": 0.146605814683
+    },
+    {
+      "circumference": 52,
+      "volume": 0.152856005368
+    },
+    {
+      "circumference": 53,
+      "volume": 0.159245964909
+    },
+    {
+      "circumference": 54,
+      "volume": 0.16577609325
+    },
+    {
+      "circumference": 55,
+      "volume": 0.17244678397
+    },
+    {
+      "circumference": 56,
+      "volume": 0.179258424501
+    },
+    {
+      "circumference": 57,
+      "volume": 0.18621139633
+    },
+    {
+      "circumference": 58,
+      "volume": 0.193306075198
+    },
+    {
+      "circumference": 59,
+      "volume": 0.200542831285
+    },
+    {
+      "circumference": 60,
+      "volume": 0.207922029382
+    },
+    {
+      "circumference": 61,
+      "volume": 0.215444029062
+    },
+    {
+      "circumference": 62,
+      "volume": 0.22310918484
+    },
+    {
+      "circumference": 63,
+      "volume": 0.230917846324
+    },
+    {
+      "circumference": 64,
+      "volume": 0.238870358362
+    },
+    {
+      "circumference": 65,
+      "volume": 0.246967061178
+    },
+    {
+      "circumference": 66,
+      "volume": 0.255208290508
+    },
+    {
+      "circumference": 67,
+      "volume": 0.263594377727
+    },
+    {
+      "circumference": 68,
+      "volume": 0.272125649965
+    },
+    {
+      "circumference": 69,
+      "volume": 0.280802430232
+    },
+    {
+      "circumference": 70,
+      "volume": 0.289625037523
+    },
+    {
+      "circumference": 71,
+      "volume": 0.298593786927
+    },
+    {
+      "circumference": 72,
+      "volume": 0.307708989729
+    },
+    {
+      "circumference": 73,
+      "volume": 0.31697095351
+    },
+    {
+      "circumference": 74,
+      "volume": 0.326379982242
+    },
+    {
+      "circumference": 75,
+      "volume": 0.335936376375
+    },
+    {
+      "circumference": 76,
+      "volume": 0.34564043293
+    },
+    {
+      "circumference": 77,
+      "volume": 0.355492445579
+    },
+    {
+      "circumference": 78,
+      "volume": 0.365492704728
+    },
+    {
+      "circumference": 79,
+      "volume": 0.375641497594
+    },
+    {
+      "circumference": 80,
+      "volume": 0.385939108281
+    },
+    {
+      "circumference": 81,
+      "volume": 0.396385817852
+    },
+    {
+      "circumference": 82,
+      "volume": 0.406981904401
+    },
+    {
+      "circumference": 83,
+      "volume": 0.417727643116
+    },
+    {
+      "circumference": 84,
+      "volume": 0.428623306349
+    },
+    {
+      "circumference": 85,
+      "volume": 0.439669163677
+    },
+    {
+      "circumference": 86,
+      "volume": 0.45086548196
+    },
+    {
+      "circumference": 87,
+      "volume": 0.462212525407
+    },
+    {
+      "circumference": 88,
+      "volume": 0.473710555623
+    },
+    {
+      "circumference": 89,
+      "volume": 0.485359831674
+    },
+    {
+      "circumference": 90,
+      "volume": 0.497160610133
+    },
+    {
+      "circumference": 91,
+      "volume": 0.509113145135
+    },
+    {
+      "circumference": 92,
+      "volume": 0.521217688425
+    },
+    {
+      "circumference": 93,
+      "volume": 0.533474489409
+    },
+    {
+      "circumference": 94,
+      "volume": 0.545883795197
+    },
+    {
+      "circumference": 95,
+      "volume": 0.558445850653
+    },
+    {
+      "circumference": 96,
+      "volume": 0.571160898434
+    },
+    {
+      "circumference": 97,
+      "volume": 0.584029179038
+    },
+    {
+      "circumference": 98,
+      "volume": 0.597050930841
+    },
+    {
+      "circumference": 99,
+      "volume": 0.610226390141
+    },
+    {
+      "circumference": 100,
+      "volume": 0.623555791192
+    },
+    {
+      "circumference": 101,
+      "volume": 0.63703936625
+    },
+    {
+      "circumference": 102,
+      "volume": 0.6506773456
+    },
+    {
+      "circumference": 103,
+      "volume": 0.6644699576
+    },
+    {
+      "circumference": 104,
+      "volume": 0.678417428714
+    },
+    {
+      "circumference": 105,
+      "volume": 0.69251998354
+    },
+    {
+      "circumference": 106,
+      "volume": 0.706777844853
+    },
+    {
+      "circumference": 107,
+      "volume": 0.721191233628
+    },
+    {
+      "circumference": 108,
+      "volume": 0.735760369077
+    },
+    {
+      "circumference": 109,
+      "volume": 0.750485468677
+    },
+    {
+      "circumference": 110,
+      "volume": 0.7653667482
+    },
+    {
+      "circumference": 111,
+      "volume": 0.780404421741
+    },
+    {
+      "circumference": 112,
+      "volume": 0.795598701748
+    },
+    {
+      "circumference": 113,
+      "volume": 0.810949799048
+    },
+    {
+      "circumference": 114,
+      "volume": 0.826457922874
+    },
+    {
+      "circumference": 115,
+      "volume": 0.842123280891
+    },
+    {
+      "circumference": 116,
+      "volume": 0.857946079221
+    },
+    {
+      "circumference": 117,
+      "volume": 0.873926522468
+    },
+    {
+      "circumference": 118,
+      "volume": 0.890064813743
+    },
+    {
+      "circumference": 119,
+      "volume": 0.906361154686
+    },
+    {
+      "circumference": 120,
+      "volume": 0.922815745489
+    },
+    {
+      "circumference": 121,
+      "volume": 0.93942878492
+    },
+    {
+      "circumference": 122,
+      "volume": 0.956200470344
+    },
+    {
+      "circumference": 123,
+      "volume": 0.973130997744
+    },
+    {
+      "circumference": 124,
+      "volume": 0.990220561744
+    },
+    {
+      "circumference": 125,
+      "volume": 1.007469355624
+    },
+    {
+      "circumference": 126,
+      "volume": 1.024877571346
+    },
+    {
+      "circumference": 127,
+      "volume": 1.042445399572
+    },
+    {
+      "circumference": 128,
+      "volume": 1.060173029679
+    },
+    {
+      "circumference": 129,
+      "volume": 1.078060649784
+    },
+    {
+      "circumference": 130,
+      "volume": 1.096108446757
+    },
+    {
+      "circumference": 131,
+      "volume": 1.11431660624
+    },
+    {
+      "circumference": 132,
+      "volume": 1.132685312667
+    },
+    {
+      "circumference": 133,
+      "volume": 1.151214749278
+    },
+    {
+      "circumference": 134,
+      "volume": 1.169905098137
+    },
+    {
+      "circumference": 135,
+      "volume": 1.188756540148
+    },
+    {
+      "circumference": 136,
+      "volume": 1.207769255073
+    },
+    {
+      "circumference": 137,
+      "volume": 1.226943421541
+    },
+    {
+      "circumference": 138,
+      "volume": 1.246279217073
+    },
+    {
+      "circumference": 139,
+      "volume": 1.26577681809
+    },
+    {
+      "circumference": 140,
+      "volume": 1.285436399929
+    },
+    {
+      "circumference": 141,
+      "volume": 1.305258136858
+    },
+    {
+      "circumference": 142,
+      "volume": 1.325242202091
+    },
+    {
+      "circumference": 143,
+      "volume": 1.345388767802
+    },
+    {
+      "circumference": 144,
+      "volume": 1.365698005134
+    },
+    {
+      "circumference": 145,
+      "volume": 1.38617008422
+    },
+    {
+      "circumference": 146,
+      "volume": 1.406805174188
+    },
+    {
+      "circumference": 147,
+      "volume": 1.427603443179
+    },
+    {
+      "circumference": 148,
+      "volume": 1.448565058358
+    },
+    {
+      "circumference": 149,
+      "volume": 1.469690185926
+    },
+    {
+      "circumference": 150,
+      "volume": 1.490978991132
+    },
+    {
+      "circumference": 151,
+      "volume": 1.512431638286
+    },
+    {
+      "circumference": 152,
+      "volume": 1.534048290768
+    },
+    {
+      "circumference": 153,
+      "volume": 1.555829111041
+    },
+    {
+      "circumference": 154,
+      "volume": 1.577774260663
+    },
+    {
+      "circumference": 155,
+      "volume": 1.599883900296
+    },
+    {
+      "circumference": 156,
+      "volume": 1.62215818972
+    },
+    {
+      "circumference": 157,
+      "volume": 1.644597287837
+    },
+    {
+      "circumference": 158,
+      "volume": 1.667201352688
+    },
+    {
+      "circumference": 159,
+      "volume": 1.689970541462
+    },
+    {
+      "circumference": 160,
+      "volume": 1.712905010502
+    },
+    {
+      "circumference": 161,
+      "volume": 1.736004915318
+    },
+    {
+      "circumference": 162,
+      "volume": 1.759270410597
+    },
+    {
+      "circumference": 163,
+      "volume": 1.782701650212
+    },
+    {
+      "circumference": 164,
+      "volume": 1.806298787228
+    },
+    {
+      "circumference": 165,
+      "volume": 1.830061973917
+    },
+    {
+      "circumference": 166,
+      "volume": 1.853991361761
+    },
+    {
+      "circumference": 167,
+      "volume": 1.878087101466
+    },
+    {
+      "circumference": 168,
+      "volume": 1.902349342967
+    },
+    {
+      "circumference": 169,
+      "volume": 1.926778235438
+    },
+    {
+      "circumference": 170,
+      "volume": 1.951373927301
+    },
+    {
+      "circumference": 171,
+      "volume": 1.976136566231
+    },
+    {
+      "circumference": 172,
+      "volume": 2.001066299169
+    },
+    {
+      "circumference": 173,
+      "volume": 2.026163272327
+    },
+    {
+      "circumference": 174,
+      "volume": 2.051427631194
+    },
+    {
+      "circumference": 175,
+      "volume": 2.076859520549
+    },
+    {
+      "circumference": 176,
+      "volume": 2.102459084463
+    },
+    {
+      "circumference": 177,
+      "volume": 2.128226466311
+    },
+    {
+      "circumference": 178,
+      "volume": 2.154161808775
+    },
+    {
+      "circumference": 179,
+      "volume": 2.180265253855
+    },
+    {
+      "circumference": 180,
+      "volume": 2.206536942875
+    },
+    {
+      "circumference": 181,
+      "volume": 2.232977016487
+    },
+    {
+      "circumference": 182,
+      "volume": 2.259585614682
+    },
+    {
+      "circumference": 183,
+      "volume": 2.286362876796
+    },
+    {
+      "circumference": 184,
+      "volume": 2.313308941515
+    },
+    {
+      "circumference": 185,
+      "volume": 2.340423946881
+    },
+    {
+      "circumference": 186,
+      "volume": 2.367708030301
+    },
+    {
+      "circumference": 187,
+      "volume": 2.395161328553
+    },
+    {
+      "circumference": 188,
+      "volume": 2.42278397779
+    },
+    {
+      "circumference": 189,
+      "volume": 2.450576113547
+    },
+    {
+      "circumference": 190,
+      "volume": 2.478537870749
+    },
+    {
+      "circumference": 191,
+      "volume": 2.506669383716
+    },
+    {
+      "circumference": 192,
+      "volume": 2.534970786165
+    },
+    {
+      "circumference": 193,
+      "volume": 2.563442211224
+    },
+    {
+      "circumference": 194,
+      "volume": 2.59208379143
+    },
+    {
+      "circumference": 195,
+      "volume": 2.620895658737
+    },
+    {
+      "circumference": 196,
+      "volume": 2.649877944525
+    },
+    {
+      "circumference": 197,
+      "volume": 2.679030779599
+    },
+    {
+      "circumference": 198,
+      "volume": 2.708354294201
+    },
+    {
+      "circumference": 199,
+      "volume": 2.737848618011
+    },
+    {
+      "circumference": 200,
+      "volume": 2.767513880153
+    },
+    {
+      "circumference": 201,
+      "volume": 2.797350209201
+    },
+    {
+      "circumference": 202,
+      "volume": 2.827357733184
+    },
+    {
+      "circumference": 203,
+      "volume": 2.857536579591
+    },
+    {
+      "circumference": 204,
+      "volume": 2.887886875375
+    },
+    {
+      "circumference": 205,
+      "volume": 2.918408746959
+    },
+    {
+      "circumference": 206,
+      "volume": 2.949102320239
+    },
+    {
+      "circumference": 207,
+      "volume": 2.979967720592
+    },
+    {
+      "circumference": 208,
+      "volume": 3.011005072877
+    },
+    {
+      "circumference": 209,
+      "volume": 3.042214501444
+    },
+    {
+      "circumference": 210,
+      "volume": 3.073596130132
+    },
+    {
+      "circumference": 211,
+      "volume": 3.105150082281
+    },
+    {
+      "circumference": 212,
+      "volume": 3.13687648073
+    },
+    {
+      "circumference": 213,
+      "volume": 3.168775447826
+    },
+    {
+      "circumference": 214,
+      "volume": 3.200847105425
+    },
+    {
+      "circumference": 215,
+      "volume": 3.2330915749
+    },
+    {
+      "circumference": 216,
+      "volume": 3.26550897714
+    },
+    {
+      "circumference": 217,
+      "volume": 3.298099432559
+    },
+    {
+      "circumference": 218,
+      "volume": 3.330863061097
+    },
+    {
+      "circumference": 219,
+      "volume": 3.363799982226
+    },
+    {
+      "circumference": 220,
+      "volume": 3.396910314952
+    },
+    {
+      "circumference": 221,
+      "volume": 3.430194177821
+    },
+    {
+      "circumference": 222,
+      "volume": 3.463651688921
+    },
+    {
+      "circumference": 223,
+      "volume": 3.497282965887
+    },
+    {
+      "circumference": 224,
+      "volume": 3.531088125905
+    },
+    {
+      "circumference": 225,
+      "volume": 3.565067285715
+    },
+    {
+      "circumference": 226,
+      "volume": 3.599220561613
+    },
+    {
+      "circumference": 227,
+      "volume": 3.63354806946
+    },
+    {
+      "circumference": 228,
+      "volume": 3.66804992468
+    },
+    {
+      "circumference": 229,
+      "volume": 3.702726242264
+    },
+    {
+      "circumference": 230,
+      "volume": 3.737577136778
+    },
+    {
+      "circumference": 231,
+      "volume": 3.772602722363
+    },
+    {
+      "circumference": 232,
+      "volume": 3.807803112737
+    },
+    {
+      "circumference": 233,
+      "volume": 3.843178421202
+    },
+    {
+      "circumference": 234,
+      "volume": 3.878728760646
+    },
+    {
+      "circumference": 235,
+      "volume": 3.914454243544
+    },
+    {
+      "circumference": 236,
+      "volume": 3.950354981965
+    },
+    {
+      "circumference": 237,
+      "volume": 3.986431087573
+    },
+    {
+      "circumference": 238,
+      "volume": 4.022682671629
+    },
+    {
+      "circumference": 239,
+      "volume": 4.059109844999
+    },
+    {
+      "circumference": 240,
+      "volume": 4.09571271815
+    },
+    {
+      "circumference": 241,
+      "volume": 4.13249140116
+    },
+    {
+      "circumference": 242,
+      "volume": 4.169446003715
+    },
+    {
+      "circumference": 243,
+      "volume": 4.206576635116
+    },
+    {
+      "circumference": 244,
+      "volume": 4.243883404282
+    },
+    {
+      "circumference": 245,
+      "volume": 4.28136641975
+    },
+    {
+      "circumference": 246,
+      "volume": 4.319025789681
+    },
+    {
+      "circumference": 247,
+      "volume": 4.356861621859
+    },
+    {
+      "circumference": 248,
+      "volume": 4.394874023699
+    },
+    {
+      "circumference": 249,
+      "volume": 4.433063102245
+    },
+    {
+      "circumference": 250,
+      "volume": 4.471428964176
+    },
+    {
+      "circumference": 251,
+      "volume": 4.509971715807
+    },
+    {
+      "circumference": 252,
+      "volume": 4.548691463092
+    },
+    {
+      "circumference": 253,
+      "volume": 4.587588311626
+    },
+    {
+      "circumference": 254,
+      "volume": 4.62666236665
+    },
+    {
+      "circumference": 255,
+      "volume": 4.665913733052
+    },
+    {
+      "circumference": 256,
+      "volume": 4.705342515368
+    },
+    {
+      "circumference": 257,
+      "volume": 4.744948817787
+    },
+    {
+      "circumference": 258,
+      "volume": 4.784732744152
+    },
+    {
+      "circumference": 259,
+      "volume": 4.824694397966
+    },
+    {
+      "circumference": 260,
+      "volume": 4.864833882387
+    },
+    {
+      "circumference": 261,
+      "volume": 4.905151300239
+    },
+    {
+      "circumference": 262,
+      "volume": 4.945646754007
+    },
+    {
+      "circumference": 263,
+      "volume": 4.986320345846
+    },
+    {
+      "circumference": 264,
+      "volume": 5.027172177578
+    },
+    {
+      "circumference": 265,
+      "volume": 5.068202350697
+    },
+    {
+      "circumference": 266,
+      "volume": 5.109410966371
+    },
+    {
+      "circumference": 267,
+      "volume": 5.150798125444
+    },
+    {
+      "circumference": 268,
+      "volume": 5.192363928437
+    },
+    {
+      "circumference": 269,
+      "volume": 5.234108475554
+    },
+    {
+      "circumference": 270,
+      "volume": 5.276031866679
+    },
+    {
+      "circumference": 271,
+      "volume": 5.318134201383
+    },
+    {
+      "circumference": 272,
+      "volume": 5.360415578923
+    },
+    {
+      "circumference": 273,
+      "volume": 5.402876098245
+    },
+    {
+      "circumference": 274,
+      "volume": 5.445515857987
+    },
+    {
+      "circumference": 275,
+      "volume": 5.48833495648
+    },
+    {
+      "circumference": 276,
+      "volume": 5.531333491749
+    },
+    {
+      "circumference": 277,
+      "volume": 5.57451156152
+    },
+    {
+      "circumference": 278,
+      "volume": 5.617869263216
+    },
+    {
+      "circumference": 279,
+      "volume": 5.66140669396
+    },
+    {
+      "circumference": 280,
+      "volume": 5.705123950582
+    },
+    {
+      "circumference": 281,
+      "volume": 5.749021129616
+    },
+    {
+      "circumference": 282,
+      "volume": 5.793098327302
+    },
+    {
+      "circumference": 283,
+      "volume": 5.837355639592
+    },
+    {
+      "circumference": 284,
+      "volume": 5.881793162146
+    },
+    {
+      "circumference": 285,
+      "volume": 5.92641099034
+    },
+    {
+      "circumference": 286,
+      "volume": 5.971209219264
+    },
+    {
+      "circumference": 287,
+      "volume": 6.016187943723
+    },
+    {
+      "circumference": 288,
+      "volume": 6.061347258245
+    },
+    {
+      "circumference": 289,
+      "volume": 6.106687257073
+    },
+    {
+      "circumference": 290,
+      "volume": 6.152208034177
+    },
+    {
+      "circumference": 291,
+      "volume": 6.197909683247
+    },
+    {
+      "circumference": 292,
+      "volume": 6.243792297703
+    },
+    {
+      "circumference": 293,
+      "volume": 6.289855970689
+    },
+    {
+      "circumference": 294,
+      "volume": 6.33610079508
+    },
+    {
+      "circumference": 295,
+      "volume": 6.382526863482
+    },
+    {
+      "circumference": 296,
+      "volume": 6.429134268232
+    },
+    {
+      "circumference": 297,
+      "volume": 6.475923101404
+    },
+    {
+      "circumference": 298,
+      "volume": 6.522893454805
+    },
+    {
+      "circumference": 299,
+      "volume": 6.570045419982
+    },
+    {
+      "circumference": 300,
+      "volume": 6.61737908822
+    },
+    {
+      "circumference": 301,
+      "volume": 6.664894550545
+    },
+    {
+      "circumference": 302,
+      "volume": 6.712591897727
+    },
+    {
+      "circumference": 303,
+      "volume": 6.760471220277
+    },
+    {
+      "circumference": 304,
+      "volume": 6.808532608454
+    },
+    {
+      "circumference": 305,
+      "volume": 6.856776152264
+    },
+    {
+      "circumference": 306,
+      "volume": 6.905201941461
+    },
+    {
+      "circumference": 307,
+      "volume": 6.953810065549
+    },
+    {
+      "circumference": 308,
+      "volume": 7.002600613784
+    },
+    {
+      "circumference": 309,
+      "volume": 7.051573675175
+    },
+    {
+      "circumference": 310,
+      "volume": 7.100729338487
+    },
+    {
+      "circumference": 311,
+      "volume": 7.15006769224
+    },
+    {
+      "circumference": 312,
+      "volume": 7.199588824711
+    },
+    {
+      "circumference": 313,
+      "volume": 7.249292823937
+    },
+    {
+      "circumference": 314,
+      "volume": 7.299179777716
+    },
+    {
+      "circumference": 315,
+      "volume": 7.349249773607
+    },
+    {
+      "circumference": 316,
+      "volume": 7.399502898932
+    },
+    {
+      "circumference": 317,
+      "volume": 7.449939240779
+    },
+    {
+      "circumference": 318,
+      "volume": 7.500558886
+    },
+    {
+      "circumference": 319,
+      "volume": 7.551361921217
+    },
+    {
+      "circumference": 320,
+      "volume": 7.602348432818
+    }
+  ]
+}

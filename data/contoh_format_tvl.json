@@ -1,0 +1,22 @@
+{
+  "id": "tvl_nama_kayu",
+  "name": "TVL Nama Kayu",
+  "species": "Nama Kayu",
+  "version": "1.0.0",
+  "updatedAt": "2026-07-16T12:00:00+07:00",
+  "source": "Nama sumber TVL resmi",
+  "entries": [
+    {
+      "circumference": 20,
+      "volume": 0.001
+    },
+    {
+      "circumference": 21,
+      "volume": 0.0012
+    },
+    {
+      "circumference": 22,
+      "volume": 0.0014
+    }
+  ]
+}

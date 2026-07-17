@@ -1,0 +1,56 @@
+/* ============================================================
+   Page-specific Styles — Master Data, About, Recap tools
+   ============================================================ */
+
+/* Master Data */
+.master-info { color: var(--muted); font-size: 13px; margin: -8px 0 20px; line-height: 1.55; }
+.master-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+.master-stat { background: var(--panel-soft); border: 1px solid var(--line); border-radius: 14px; padding: 16px; text-align: center; }
+.master-stat .stat-label { display: block; color: var(--muted); font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.master-stat strong { display: block; font-size: 28px; color: var(--ink); letter-spacing: -.03em; }
+.master-actions { padding-top: 16px; border-top: 1px solid var(--line); display: flex; gap: 10px; flex-wrap: wrap; }
+.master-actions .btn { flex: 1; min-width: 140px; }
+.master-actions .btn-danger { flex: none; width: 100%; }
+
+/* About page */
+.about-panel { max-width: 600px; }
+.about-header { display: flex; align-items: center; gap: 20px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.about-logo { width: 64px; height: 64px; border-radius: 16px; display: block; object-fit: cover; }
+.about-header h3 { margin: 0 0 6px; font-size: 20px; }
+.about-header p { margin: 0; color: var(--muted); font-size: 13px; }
+.about-info { background: var(--panel-soft); border: 1px solid var(--line); border-radius: 14px; padding: 4px 0; margin-bottom: 20px; }
+.info-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; }
+.info-row:not(:last-child) { border-bottom: 1px solid var(--line); }
+.info-label { color: var(--muted); font-size: 13px; }
+.info-value { font-weight: 700; color: var(--ink); font-size: 13px; }
+.about-developer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--green-50);
+  border: 1px solid var(--green-100);
+  color: var(--green-900);
+  font-weight: 800;
+  font-size: 12px;
+}
+.about-date-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--green-900), var(--green-700));
+  border: 1px solid rgba(18,94,61,.18);
+  color: #fff;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: .01em;
+  box-shadow: 0 10px 20px rgba(18,94,61,.16);
+  white-space: nowrap;
+}
+.about-actions { margin-top: 20px; }
+.about-actions .btn { width: 100%; }
+.about-tech { padding: 14px; background: var(--green-50); border: 1px solid var(--green-100); border-radius: 12px; }
+.about-tech p { margin: 0; color: var(--green-900); font-size: 12px; line-height: 1.6; }

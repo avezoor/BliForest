@@ -1,0 +1,1230 @@
+{
+  "id": "tvl_jati",
+  "name": "TVL Jati - Blitar",
+  "species": "Jati",
+  "normalizedSpecies": "Tectona grandis",
+  "version": "2026.07.16.1",
+  "updatedAt": "2026-07-16T10:34:37+07:00",
+  "unitCircumference": "cm",
+  "unitVolume": "m3",
+  "source": "TVL Blitar, KPH Blitar. Sesuai lembar 'TVL': Jati menggunakan Jati Baru. Workbook terakhir disimpan 2023-04-13.",
+  "sourceWorkbook": "TVL Blitar.. (1).xls",
+  "sourceSheet": "Jati Baru",
+  "mappingRule": "Jati Baru",
+  "factor": 1.0,
+  "range": {
+    "minimumCircumference": 20,
+    "maximumCircumference": 320,
+    "step": 1
+  },
+  "entries": [
+    {
+      "circumference": 20,
+      "volume": 0.018
+    },
+    {
+      "circumference": 21,
+      "volume": 0.02
+    },
+    {
+      "circumference": 22,
+      "volume": 0.022
+    },
+    {
+      "circumference": 23,
+      "volume": 0.024
+    },
+    {
+      "circumference": 24,
+      "volume": 0.026
+    },
+    {
+      "circumference": 25,
+      "volume": 0.029
+    },
+    {
+      "circumference": 26,
+      "volume": 0.032
+    },
+    {
+      "circumference": 27,
+      "volume": 0.034
+    },
+    {
+      "circumference": 28,
+      "volume": 0.037
+    },
+    {
+      "circumference": 29,
+      "volume": 0.04
+    },
+    {
+      "circumference": 30,
+      "volume": 0.043
+    },
+    {
+      "circumference": 31,
+      "volume": 0.046
+    },
+    {
+      "circumference": 32,
+      "volume": 0.049
+    },
+    {
+      "circumference": 33,
+      "volume": 0.053
+    },
+    {
+      "circumference": 34,
+      "volume": 0.056
+    },
+    {
+      "circumference": 35,
+      "volume": 0.06
+    },
+    {
+      "circumference": 36,
+      "volume": 0.064
+    },
+    {
+      "circumference": 37,
+      "volume": 0.068
+    },
+    {
+      "circumference": 38,
+      "volume": 0.072
+    },
+    {
+      "circumference": 39,
+      "volume": 0.076
+    },
+    {
+      "circumference": 40,
+      "volume": 0.08
+    },
+    {
+      "circumference": 41,
+      "volume": 0.085
+    },
+    {
+      "circumference": 42,
+      "volume": 0.089
+    },
+    {
+      "circumference": 43,
+      "volume": 0.094
+    },
+    {
+      "circumference": 44,
+      "volume": 0.099
+    },
+    {
+      "circumference": 45,
+      "volume": 0.104
+    },
+    {
+      "circumference": 46,
+      "volume": 0.109
+    },
+    {
+      "circumference": 47,
+      "volume": 0.114
+    },
+    {
+      "circumference": 48,
+      "volume": 0.119
+    },
+    {
+      "circumference": 49,
+      "volume": 0.125
+    },
+    {
+      "circumference": 50,
+      "volume": 0.13
+    },
+    {
+      "circumference": 51,
+      "volume": 0.136
+    },
+    {
+      "circumference": 52,
+      "volume": 0.142
+    },
+    {
+      "circumference": 53,
+      "volume": 0.148
+    },
+    {
+      "circumference": 54,
+      "volume": 0.154
+    },
+    {
+      "circumference": 55,
+      "volume": 0.16
+    },
+    {
+      "circumference": 56,
+      "volume": 0.167
+    },
+    {
+      "circumference": 57,
+      "volume": 0.173
+    },
+    {
+      "circumference": 58,
+      "volume": 0.18
+    },
+    {
+      "circumference": 59,
+      "volume": 0.187
+    },
+    {
+      "circumference": 60,
+      "volume": 0.194
+    },
+    {
+      "circumference": 61,
+      "volume": 0.201
+    },
+    {
+      "circumference": 62,
+      "volume": 0.208
+    },
+    {
+      "circumference": 63,
+      "volume": 0.215
+    },
+    {
+      "circumference": 64,
+      "volume": 0.223
+    },
+    {
+      "circumference": 65,
+      "volume": 0.23
+    },
+    {
+      "circumference": 66,
+      "volume": 0.238
+    },
+    {
+      "circumference": 67,
+      "volume": 0.246
+    },
+    {
+      "circumference": 68,
+      "volume": 0.254
+    },
+    {
+      "circumference": 69,
+      "volume": 0.262
+    },
+    {
+      "circumference": 70,
+      "volume": 0.27
+    },
+    {
+      "circumference": 71,
+      "volume": 0.279
+    },
+    {
+      "circumference": 72,
+      "volume": 0.287
+    },
+    {
+      "circumference": 73,
+      "volume": 0.296
+    },
+    {
+      "circumference": 74,
+      "volume": 0.305
+    },
+    {
+      "circumference": 75,
+      "volume": 0.314
+    },
+    {
+      "circumference": 76,
+      "volume": 0.323
+    },
+    {
+      "circumference": 77,
+      "volume": 0.333
+    },
+    {
+      "circumference": 78,
+      "volume": 0.342
+    },
+    {
+      "circumference": 79,
+      "volume": 0.352
+    },
+    {
+      "circumference": 80,
+      "volume": 0.361
+    },
+    {
+      "circumference": 81,
+      "volume": 0.371
+    },
+    {
+      "circumference": 82,
+      "volume": 0.381
+    },
+    {
+      "circumference": 83,
+      "volume": 0.391
+    },
+    {
+      "circumference": 84,
+      "volume": 0.402
+    },
+    {
+      "circumference": 85,
+      "volume": 0.412
+    },
+    {
+      "circumference": 86,
+      "volume": 0.423
+    },
+    {
+      "circumference": 87,
+      "volume": 0.433
+    },
+    {
+      "circumference": 88,
+      "volume": 0.444
+    },
+    {
+      "circumference": 89,
+      "volume": 0.455
+    },
+    {
+      "circumference": 90,
+      "volume": 0.466
+    },
+    {
+      "circumference": 91,
+      "volume": 0.478
+    },
+    {
+      "circumference": 92,
+      "volume": 0.489
+    },
+    {
+      "circumference": 93,
+      "volume": 0.501
+    },
+    {
+      "circumference": 94,
+      "volume": 0.513
+    },
+    {
+      "circumference": 95,
+      "volume": 0.525
+    },
+    {
+      "circumference": 96,
+      "volume": 0.537
+    },
+    {
+      "circumference": 97,
+      "volume": 0.549
+    },
+    {
+      "circumference": 98,
+      "volume": 0.561
+    },
+    {
+      "circumference": 99,
+      "volume": 0.574
+    },
+    {
+      "circumference": 100,
+      "volume": 0.586
+    },
+    {
+      "circumference": 101,
+      "volume": 0.599
+    },
+    {
+      "circumference": 102,
+      "volume": 0.612
+    },
+    {
+      "circumference": 103,
+      "volume": 0.625
+    },
+    {
+      "circumference": 104,
+      "volume": 0.638
+    },
+    {
+      "circumference": 105,
+      "volume": 0.652
+    },
+    {
+      "circumference": 106,
+      "volume": 0.665
+    },
+    {
+      "circumference": 107,
+      "volume": 0.679
+    },
+    {
+      "circumference": 108,
+      "volume": 0.693
+    },
+    {
+      "circumference": 109,
+      "volume": 0.707
+    },
+    {
+      "circumference": 110,
+      "volume": 0.721
+    },
+    {
+      "circumference": 111,
+      "volume": 0.735
+    },
+    {
+      "circumference": 112,
+      "volume": 0.75
+    },
+    {
+      "circumference": 113,
+      "volume": 0.764
+    },
+    {
+      "circumference": 114,
+      "volume": 0.779
+    },
+    {
+      "circumference": 115,
+      "volume": 0.794
+    },
+    {
+      "circumference": 116,
+      "volume": 0.809
+    },
+    {
+      "circumference": 117,
+      "volume": 0.824
+    },
+    {
+      "circumference": 118,
+      "volume": 0.84
+    },
+    {
+      "circumference": 119,
+      "volume": 0.855
+    },
+    {
+      "circumference": 120,
+      "volume": 0.871
+    },
+    {
+      "circumference": 121,
+      "volume": 0.887
+    },
+    {
+      "circumference": 122,
+      "volume": 0.903
+    },
+    {
+      "circumference": 123,
+      "volume": 0.919
+    },
+    {
+      "circumference": 124,
+      "volume": 0.935
+    },
+    {
+      "circumference": 125,
+      "volume": 0.951
+    },
+    {
+      "circumference": 126,
+      "volume": 0.968
+    },
+    {
+      "circumference": 127,
+      "volume": 0.985
+    },
+    {
+      "circumference": 128,
+      "volume": 1.002
+    },
+    {
+      "circumference": 129,
+      "volume": 1.019
+    },
+    {
+      "circumference": 130,
+      "volume": 1.036
+    },
+    {
+      "circumference": 131,
+      "volume": 1.053
+    },
+    {
+      "circumference": 132,
+      "volume": 1.071
+    },
+    {
+      "circumference": 133,
+      "volume": 1.089
+    },
+    {
+      "circumference": 134,
+      "volume": 1.106
+    },
+    {
+      "circumference": 135,
+      "volume": 1.124
+    },
+    {
+      "circumference": 136,
+      "volume": 1.143
+    },
+    {
+      "circumference": 137,
+      "volume": 1.161
+    },
+    {
+      "circumference": 138,
+      "volume": 1.179
+    },
+    {
+      "circumference": 139,
+      "volume": 1.198
+    },
+    {
+      "circumference": 140,
+      "volume": 1.217
+    },
+    {
+      "circumference": 141,
+      "volume": 1.236
+    },
+    {
+      "circumference": 142,
+      "volume": 1.255
+    },
+    {
+      "circumference": 143,
+      "volume": 1.274
+    },
+    {
+      "circumference": 144,
+      "volume": 1.293
+    },
+    {
+      "circumference": 145,
+      "volume": 1.313
+    },
+    {
+      "circumference": 146,
+      "volume": 1.333
+    },
+    {
+      "circumference": 147,
+      "volume": 1.353
+    },
+    {
+      "circumference": 148,
+      "volume": 1.373
+    },
+    {
+      "circumference": 149,
+      "volume": 1.393
+    },
+    {
+      "circumference": 150,
+      "volume": 1.413
+    },
+    {
+      "circumference": 151,
+      "volume": 1.434
+    },
+    {
+      "circumference": 152,
+      "volume": 1.454
+    },
+    {
+      "circumference": 153,
+      "volume": 1.475
+    },
+    {
+      "circumference": 154,
+      "volume": 1.496
+    },
+    {
+      "circumference": 155,
+      "volume": 1.518
+    },
+    {
+      "circumference": 156,
+      "volume": 1.539
+    },
+    {
+      "circumference": 157,
+      "volume": 1.56
+    },
+    {
+      "circumference": 158,
+      "volume": 1.582
+    },
+    {
+      "circumference": 159,
+      "volume": 1.604
+    },
+    {
+      "circumference": 160,
+      "volume": 1.626
+    },
+    {
+      "circumference": 161,
+      "volume": 1.648
+    },
+    {
+      "circumference": 162,
+      "volume": 1.67
+    },
+    {
+      "circumference": 163,
+      "volume": 1.693
+    },
+    {
+      "circumference": 164,
+      "volume": 1.715
+    },
+    {
+      "circumference": 165,
+      "volume": 1.738
+    },
+    {
+      "circumference": 166,
+      "volume": 1.761
+    },
+    {
+      "circumference": 167,
+      "volume": 1.784
+    },
+    {
+      "circumference": 168,
+      "volume": 1.807
+    },
+    {
+      "circumference": 169,
+      "volume": 1.831
+    },
+    {
+      "circumference": 170,
+      "volume": 1.854
+    },
+    {
+      "circumference": 171,
+      "volume": 1.878
+    },
+    {
+      "circumference": 172,
+      "volume": 1.902
+    },
+    {
+      "circumference": 173,
+      "volume": 1.926
+    },
+    {
+      "circumference": 174,
+      "volume": 1.95
+    },
+    {
+      "circumference": 175,
+      "volume": 1.975
+    },
+    {
+      "circumference": 176,
+      "volume": 1.999
+    },
+    {
+      "circumference": 177,
+      "volume": 2.024
+    },
+    {
+      "circumference": 178,
+      "volume": 2.049
+    },
+    {
+      "circumference": 179,
+      "volume": 2.074
+    },
+    {
+      "circumference": 180,
+      "volume": 2.099
+    },
+    {
+      "circumference": 181,
+      "volume": 2.125
+    },
+    {
+      "circumference": 182,
+      "volume": 2.15
+    },
+    {
+      "circumference": 183,
+      "volume": 2.176
+    },
+    {
+      "circumference": 184,
+      "volume": 2.202
+    },
+    {
+      "circumference": 185,
+      "volume": 2.228
+    },
+    {
+      "circumference": 186,
+      "volume": 2.254
+    },
+    {
+      "circumference": 187,
+      "volume": 2.28
+    },
+    {
+      "circumference": 188,
+      "volume": 2.307
+    },
+    {
+      "circumference": 189,
+      "volume": 2.334
+    },
+    {
+      "circumference": 190,
+      "volume": 2.361
+    },
+    {
+      "circumference": 191,
+      "volume": 2.388
+    },
+    {
+      "circumference": 192,
+      "volume": 2.415
+    },
+    {
+      "circumference": 193,
+      "volume": 2.442
+    },
+    {
+      "circumference": 194,
+      "volume": 2.47
+    },
+    {
+      "circumference": 195,
+      "volume": 2.497
+    },
+    {
+      "circumference": 196,
+      "volume": 2.525
+    },
+    {
+      "circumference": 197,
+      "volume": 2.553
+    },
+    {
+      "circumference": 198,
+      "volume": 2.582
+    },
+    {
+      "circumference": 199,
+      "volume": 2.61
+    },
+    {
+      "circumference": 200,
+      "volume": 2.638
+    },
+    {
+      "circumference": 201,
+      "volume": 2.667
+    },
+    {
+      "circumference": 202,
+      "volume": 2.696
+    },
+    {
+      "circumference": 203,
+      "volume": 2.725
+    },
+    {
+      "circumference": 204,
+      "volume": 2.754
+    },
+    {
+      "circumference": 205,
+      "volume": 2.784
+    },
+    {
+      "circumference": 206,
+      "volume": 2.813
+    },
+    {
+      "circumference": 207,
+      "volume": 2.843
+    },
+    {
+      "circumference": 208,
+      "volume": 2.873
+    },
+    {
+      "circumference": 209,
+      "volume": 2.903
+    },
+    {
+      "circumference": 210,
+      "volume": 2.933
+    },
+    {
+      "circumference": 211,
+      "volume": 2.963
+    },
+    {
+      "circumference": 212,
+      "volume": 2.994
+    },
+    {
+      "circumference": 213,
+      "volume": 3.025
+    },
+    {
+      "circumference": 214,
+      "volume": 3.056
+    },
+    {
+      "circumference": 215,
+      "volume": 3.087
+    },
+    {
+      "circumference": 216,
+      "volume": 3.118
+    },
+    {
+      "circumference": 217,
+      "volume": 3.149
+    },
+    {
+      "circumference": 218,
+      "volume": 3.181
+    },
+    {
+      "circumference": 219,
+      "volume": 3.213
+    },
+    {
+      "circumference": 220,
+      "volume": 3.245
+    },
+    {
+      "circumference": 221,
+      "volume": 3.277
+    },
+    {
+      "circumference": 222,
+      "volume": 3.309
+    },
+    {
+      "circumference": 223,
+      "volume": 3.341
+    },
+    {
+      "circumference": 224,
+      "volume": 3.374
+    },
+    {
+      "circumference": 225,
+      "volume": 3.407
+    },
+    {
+      "circumference": 226,
+      "volume": 3.44
+    },
+    {
+      "circumference": 227,
+      "volume": 3.473
+    },
+    {
+      "circumference": 228,
+      "volume": 3.506
+    },
+    {
+      "circumference": 229,
+      "volume": 3.54
+    },
+    {
+      "circumference": 230,
+      "volume": 3.573
+    },
+    {
+      "circumference": 231,
+      "volume": 3.607
+    },
+    {
+      "circumference": 232,
+      "volume": 3.641
+    },
+    {
+      "circumference": 233,
+      "volume": 3.675
+    },
+    {
+      "circumference": 234,
+      "volume": 3.709
+    },
+    {
+      "circumference": 235,
+      "volume": 3.744
+    },
+    {
+      "circumference": 236,
+      "volume": 3.779
+    },
+    {
+      "circumference": 237,
+      "volume": 3.813
+    },
+    {
+      "circumference": 238,
+      "volume": 3.848
+    },
+    {
+      "circumference": 239,
+      "volume": 3.884
+    },
+    {
+      "circumference": 240,
+      "volume": 3.919
+    },
+    {
+      "circumference": 241,
+      "volume": 3.954
+    },
+    {
+      "circumference": 242,
+      "volume": 3.99
+    },
+    {
+      "circumference": 243,
+      "volume": 4.026
+    },
+    {
+      "circumference": 244,
+      "volume": 4.062
+    },
+    {
+      "circumference": 245,
+      "volume": 4.098
+    },
+    {
+      "circumference": 246,
+      "volume": 4.135
+    },
+    {
+      "circumference": 247,
+      "volume": 4.171
+    },
+    {
+      "circumference": 248,
+      "volume": 4.208
+    },
+    {
+      "circumference": 249,
+      "volume": 4.245
+    },
+    {
+      "circumference": 250,
+      "volume": 4.282
+    },
+    {
+      "circumference": 251,
+      "volume": 4.319
+    },
+    {
+      "circumference": 252,
+      "volume": 4.357
+    },
+    {
+      "circumference": 253,
+      "volume": 4.394
+    },
+    {
+      "circumference": 254,
+      "volume": 4.432
+    },
+    {
+      "circumference": 255,
+      "volume": 4.47
+    },
+    {
+      "circumference": 256,
+      "volume": 4.508
+    },
+    {
+      "circumference": 257,
+      "volume": 4.546
+    },
+    {
+      "circumference": 258,
+      "volume": 4.585
+    },
+    {
+      "circumference": 259,
+      "volume": 4.624
+    },
+    {
+      "circumference": 260,
+      "volume": 4.662
+    },
+    {
+      "circumference": 261,
+      "volume": 4.701
+    },
+    {
+      "circumference": 262,
+      "volume": 4.741
+    },
+    {
+      "circumference": 263,
+      "volume": 4.78
+    },
+    {
+      "circumference": 264,
+      "volume": 4.819
+    },
+    {
+      "circumference": 265,
+      "volume": 4.859
+    },
+    {
+      "circumference": 266,
+      "volume": 4.899
+    },
+    {
+      "circumference": 267,
+      "volume": 4.939
+    },
+    {
+      "circumference": 268,
+      "volume": 4.979
+    },
+    {
+      "circumference": 269,
+      "volume": 5.02
+    },
+    {
+      "circumference": 270,
+      "volume": 5.06
+    },
+    {
+      "circumference": 271,
+      "volume": 5.101
+    },
+    {
+      "circumference": 272,
+      "volume": 5.142
+    },
+    {
+      "circumference": 273,
+      "volume": 5.183
+    },
+    {
+      "circumference": 274,
+      "volume": 5.224
+    },
+    {
+      "circumference": 275,
+      "volume": 5.266
+    },
+    {
+      "circumference": 276,
+      "volume": 5.307
+    },
+    {
+      "circumference": 277,
+      "volume": 5.349
+    },
+    {
+      "circumference": 278,
+      "volume": 5.391
+    },
+    {
+      "circumference": 279,
+      "volume": 5.433
+    },
+    {
+      "circumference": 280,
+      "volume": 5.476
+    },
+    {
+      "circumference": 281,
+      "volume": 5.518
+    },
+    {
+      "circumference": 282,
+      "volume": 5.561
+    },
+    {
+      "circumference": 283,
+      "volume": 5.604
+    },
+    {
+      "circumference": 284,
+      "volume": 5.647
+    },
+    {
+      "circumference": 285,
+      "volume": 5.69
+    },
+    {
+      "circumference": 286,
+      "volume": 5.734
+    },
+    {
+      "circumference": 287,
+      "volume": 5.777
+    },
+    {
+      "circumference": 288,
+      "volume": 5.821
+    },
+    {
+      "circumference": 289,
+      "volume": 5.865
+    },
+    {
+      "circumference": 290,
+      "volume": 5.909
+    },
+    {
+      "circumference": 291,
+      "volume": 5.953
+    },
+    {
+      "circumference": 292,
+      "volume": 5.998
+    },
+    {
+      "circumference": 293,
+      "volume": 6.042
+    },
+    {
+      "circumference": 294,
+      "volume": 6.087
+    },
+    {
+      "circumference": 295,
+      "volume": 6.132
+    },
+    {
+      "circumference": 296,
+      "volume": 6.178
+    },
+    {
+      "circumference": 297,
+      "volume": 6.223
+    },
+    {
+      "circumference": 298,
+      "volume": 6.268
+    },
+    {
+      "circumference": 299,
+      "volume": 6.314
+    },
+    {
+      "circumference": 300,
+      "volume": 6.36
+    },
+    {
+      "circumference": 301,
+      "volume": 6.406
+    },
+    {
+      "circumference": 302,
+      "volume": 6.452
+    },
+    {
+      "circumference": 303,
+      "volume": 6.499
+    },
+    {
+      "circumference": 304,
+      "volume": 6.546
+    },
+    {
+      "circumference": 305,
+      "volume": 6.592
+    },
+    {
+      "circumference": 306,
+      "volume": 6.639
+    },
+    {
+      "circumference": 307,
+      "volume": 6.687
+    },
+    {
+      "circumference": 308,
+      "volume": 6.734
+    },
+    {
+      "circumference": 309,
+      "volume": 6.781
+    },
+    {
+      "circumference": 310,
+      "volume": 6.829
+    },
+    {
+      "circumference": 311,
+      "volume": 6.877
+    },
+    {
+      "circumference": 312,
+      "volume": 6.925
+    },
+    {
+      "circumference": 313,
+      "volume": 6.973
+    },
+    {
+      "circumference": 314,
+      "volume": 7.022
+    },
+    {
+      "circumference": 315,
+      "volume": 7.07
+    },
+    {
+      "circumference": 316,
+      "volume": 7.119
+    },
+    {
+      "circumference": 317,
+      "volume": 7.168
+    },
+    {
+      "circumference": 318,
+      "volume": 7.217
+    },
+    {
+      "circumference": 319,
+      "volume": 7.267
+    },
+    {
+      "circumference": 320,
+      "volume": 7.316
+    }
+  ],
+  "dataNotes": [
+    "Keliling 278-281 tidak tersedia pada urutan utama lembar Jati Baru karena tertimpa sel pemeriksaan duplikat.",
+    "Nilai 278-281 direkonstruksi dari rumus pada lembar: V = 2.67985434 × 10^-5 × K^2.170 dan dibulatkan 3 desimal, konsisten dengan tabel Jati Baru."
+  ]
+}

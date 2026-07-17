@@ -1,0 +1,58 @@
+"use strict";
+
+window.KLEM_KAYU_BKPH_DATA = {
+  "BKPH Campurdarat": [
+    "RPH Besole",
+    "RPH Campurdarat",
+    "RPH Kalitalun",
+    "RPH Tanggunggunung"
+  ],
+  "BKPH Kalidawir": [
+    "RPH Kedungdowo",
+    "RPH Ngampel",
+    "RPH Panggungkalak",
+    "RPH Sanggrahan",
+    "RPH Tumpakgempol"
+  ],
+  "BKPH Rejotangan": [
+    "RPH Ngrejo",
+    "RPH Ngubalan",
+    "RPH Tanan",
+    "RPH Ilik-ilik",
+    "RPH Maron",
+    "RPH Sumberingin"
+  ],
+  "BKPH Lodoyo Barat": [
+    "RPH Banjarsari",
+    "RPH Plosorejo",
+    "RPH Sekaran",
+    "RPH Gondanglegi",
+    "RPH Kepek",
+    "RPH Sumberboto"
+  ],
+  "BKPH Lodoyo Timur": [
+    "RPH Serang",
+    "RPH Panggungrejo",
+    "RPH Banaran",
+    "RPH Jemblong",
+    "RPH Rampalombo",
+    "RPH Kaulon"
+  ],
+  "BKPH Wlingi": [
+    "RPH Penataran",
+    "RPH Gandusari",
+    "RPH Tembalang",
+    "RPH Ampelgading"
+  ],
+  "BKPH Kesamben": [
+    "RPH Ringinrejo",
+    "RPH Rejoso",
+    "RPH Jajagan",
+    "RPH Plangi"
+  ],
+  "BKPH Sumberpucung": [
+    "RPH Sukowilangun",
+    "RPH Kalipare",
+    "RPH Singkil"
+  ]
+};
