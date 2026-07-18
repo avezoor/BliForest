@@ -4,7 +4,7 @@
 // sedang online mengambil HTML/CSS/JS terbaru, sedangkan mode offline tetap
 // memakai salinan terakhir yang berhasil disimpan.
 const CACHE_PREFIX = "BliForest-";
-const CACHE_NAME = CACHE_PREFIX + "BliForest-1.4.4-2026.07.18-22:31";
+const CACHE_NAME = CACHE_PREFIX + "BliForest-1.4.5-2026.07.18-23:13";
 
 const CORE_FILES = [
   "./",
@@ -129,6 +129,12 @@ self.addEventListener("fetch", event => {
   const isImage = request.destination === "image";
   const isSameOrigin = url.origin === self.location.origin;
   const isGithubRaw = url.hostname === "raw.githubusercontent.com";
+
+  // Dokumen (docs/) tidak di-cache - butuh internet
+  if (url.pathname.startsWith("/docs/") || url.pathname.startsWith("docs/")) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   if (isNavigation) {
     event.respondWith(networkFirst(request, "./index.html"));
