@@ -58,16 +58,11 @@ function init() {
     el("install-btn") && el("install-btn").addEventListener("click", App.pwa.installApp);
     el("refresh-all-btn") && el("refresh-all-btn").addEventListener("click", App.pwa.refreshApplication);
     el("update-tvl-btn") && el("update-tvl-btn").addEventListener("click", function() {
-      App.tvl.refreshTvls({ showResultToast: false }).then(function(result) {
-        App.components.updateTvlSyncStatus();
-        if (result && result.changedTvlIds && result.changedTvlIds.length) {
-          App.components.showToast(result.changedTvlIds.length + " TVL diperbarui; " + (result.calculation && result.calculation.scanned || 0) + " data pohon dihitung ulang.");
-        } else {
-          App.components.showToast("TVL sudah menggunakan versi terbaru.");
-        }
-      }).catch(function(err) {
-        App.components.showToast(err.message || "TVL gagal diperbarui.");
-      });
+      App.pwa.syncWhenOnline({ showToast: true, button: el("update-tvl-btn"), reason: "manual-tvl" });
     });
+
+    // 10. Sesudah data lokal siap dan layar sudah dapat dipakai, cek GitHub
+    // di belakang layar. Pengguna tidak perlu menunggu jaringan untuk masuk.
+    App.pwa.syncWhenOnline({ showToast: false, reason: "startup" });
   });
 }

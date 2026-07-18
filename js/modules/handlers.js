@@ -416,7 +416,7 @@
     el("backup-btn") && el("backup-btn").addEventListener("click", function() {
       var state = App.storage.state;
       var payload = { app: "BliForest", version: global.APP_DATA_VERSION, exportedAt: new Date().toISOString(), data: state };
-      U.downloadBlob(JSON.stringify(payload, null, 2), "backup-bliforest-" + U.dateStamp() + ".json", "application/json");
+      U.downloadBlob(JSON.stringify(payload, null, 2), "backup-BliForest-" + U.dateStamp() + ".json", "application/json");
       App.components.showToast("Cadangan data berhasil dibuat.");
     });
     el("restore-btn") && el("restore-btn").addEventListener("click", function() {

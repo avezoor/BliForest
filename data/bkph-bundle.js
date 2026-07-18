@@ -1,6 +1,6 @@
 "use strict";
 
-window.KLEM_KAYU_BKPH_DATA = {
+window.BLIFOREST_BKPH_DATA = {
   "BKPH Campurdarat": [
     "RPH Besole",
     "RPH Campurdarat",

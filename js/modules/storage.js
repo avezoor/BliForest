@@ -31,7 +31,9 @@
         serverUpdatedAt: null,
         lastCheckedAt: null,
         lastUpdatedAt: null,
-        managedIds: []
+        managedIds: [],
+        dataSource: "local",
+        lastSyncError: null
       }
     };
   }
@@ -60,7 +62,9 @@
             serverUpdatedAt: syn.serverUpdatedAt !== undefined ? syn.serverUpdatedAt : def.serverUpdatedAt,
             lastCheckedAt: syn.lastCheckedAt !== undefined ? syn.lastCheckedAt : def.lastCheckedAt,
             lastUpdatedAt: syn.lastUpdatedAt !== undefined ? syn.lastUpdatedAt : def.lastUpdatedAt,
-            managedIds: Array.isArray(syn.managedIds) ? syn.managedIds : def.managedIds
+            managedIds: Array.isArray(syn.managedIds) ? syn.managedIds : def.managedIds,
+            dataSource: syn.dataSource !== undefined ? syn.dataSource : def.dataSource,
+            lastSyncError: syn.lastSyncError !== undefined ? syn.lastSyncError : def.lastSyncError
           };
         })()
       };

@@ -1,12 +1,16 @@
 {
+  "id": "./",
   "name": "BliForest",
   "short_name": "BliForest",
-  "start_url": "./index.html",
+  "description": "PWA pencatatan klem pohon dan perhitungan volume TVL yang bekerja online maupun offline.",
+  "lang": "id-ID",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#f3f5ef",
   "theme_color": "#125e3d",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "icons/pwa/icon-192.png",

@@ -18,7 +18,7 @@
   }
 
   function loadBkphRphData() {
-    var bundled = window.KLEM_KAYU_BKPH_DATA;
+    var bundled = window.BLIFOREST_BKPH_DATA;
     var clone = global.Utils ? global.Utils.structuredCloneSafe : function(v) {
       return JSON.parse(JSON.stringify(v));
     };

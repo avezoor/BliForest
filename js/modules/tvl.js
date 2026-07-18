@@ -1,147 +1,176 @@
 "use strict";
 
 // ============================================================
-// TVL Data Module (Berkhout Formula)
+// TVL Data Module (Berkhout Formula + offline-first sync)
 // ============================================================
-// Volume = a * K^b * factor
-// Diameter = K / π
-// Height = (40000 * π * a * K^(b-2)) / factor_correction
+// Volume = a × K^b × factor
 // ============================================================
 
 (function(global) {
   var App = global.App || {};
   var TVL_INDEX_PATH = global.TVL_INDEX_PATH;
-  var FALLBACK_TVL_FILES = global.FALLBACK_TVL_FILES;
+  var TVL_REMOTE_INDEX = global.TVL_REMOTE_INDEX || "";
   var TVL_REMOTE_BASE = global.TVL_REMOTE_BASE || "";
+  var FALLBACK_TVL_FILES = global.FALLBACK_TVL_FILES || [];
+  var MANIFEST_STORAGE_KEY = global.TVL_MANIFEST_STORAGE_KEY || "bliforest-tvl-manifest";
+  var RAW_STORAGE_PREFIX = global.TVL_RAW_STORAGE_PREFIX || "bliforest-tvl-raw:";
 
-  // Math constants
   var PI = Math.PI;
-  var MATH_40000_PI = 40000 * PI;
+  var refreshInFlight = null;
 
-  // ---- Calculate volume using berkhout formula ----
+  // ------------------------------------------------------------
+  // Perhitungan
+  // ------------------------------------------------------------
+
   function calculateVolume(tvl, circumference) {
     if (!tvl || !tvl.coefficients || !Number.isFinite(circumference)) return null;
-    var a = tvl.coefficients.a;
-    var b = tvl.coefficients.b;
-    var factor = tvl.coefficients.factor || 1;
+    var a = Number(tvl.coefficients.a);
+    var b = Number(tvl.coefficients.b);
+    var factor = Number(tvl.coefficients.factor);
     if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+    if (!Number.isFinite(factor) || factor === 0) factor = 1;
     return a * Math.pow(circumference, b) * factor;
   }
 
-  // ---- Calculate diameter using keliling ----
   function calculateDiameter(tvl, circumference) {
     if (!Number.isFinite(circumference)) return null;
     return circumference / PI;
   }
 
-  // ---- Calculate height using berkhout formula ----
   function calculateHeight(tvl, circumference) {
     if (!tvl || !tvl.coefficients || !Number.isFinite(circumference)) return null;
-    var a = tvl.coefficients.a;
-    var b = tvl.coefficients.b;
-    var factor_correction = tvl.coefficients.factor_correction || 1;
+    var a = Number(tvl.coefficients.a);
+    var b = Number(tvl.coefficients.b);
+    var factorCorrection = Number(tvl.coefficients.factor_correction);
     if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
-    return (MATH_40000_PI * a * Math.pow(circumference, b - 2)) / factor_correction;
+    if (!Number.isFinite(factorCorrection) || factorCorrection === 0) factorCorrection = 1;
+    return (40000 * PI * a * Math.pow(circumference, b - 2)) / factorCorrection;
   }
 
-  // ---- Calculate all tree metrics ----
   function calculateTreeMetrics(tvl, circumference) {
-    var volume = calculateVolume(tvl, circumference);
-    var diameter = calculateDiameter(tvl, circumference);
-    var height = calculateHeight(tvl, circumference);
     return {
-      volume: volume,
-      diameter: diameter,
-      height: height,
+      volume: calculateVolume(tvl, circumference),
+      diameter: calculateDiameter(tvl, circumference),
+      height: calculateHeight(tvl, circumference),
       circumference: circumference
     };
   }
 
-  // ---- Fetch JSON (offline-aware: check connectivity first, then appropriate fetch) ----
-  function fetchJson(path, fresh) {
-    var isOnline = navigator.onLine;
+  // Normalisasi dan validasi
 
-    // Convert to GitHub raw URL for TVL files if online
-    var remotePath = path;
-    if (TVL_REMOTE_BASE && (path.indexOf("data/tvl/") !== -1 || path.indexOf("tvl-index") !== -1)) {
-      var filename = path.split("/").pop();
-      remotePath = TVL_REMOTE_BASE + "/" + filename;
-    }
-
-    // ---- OFFLINE path ----
-    if (!isOnline) {
-      // Try SW cache first (PWA pre-cached), then localStorage
-      return caches.match(remotePath).then(function(cached) {
-        if (cached) return cached.json();
-        return caches.match(path).then(function(c) { return c ? c.json() : null; });
-      }).then(function(result) {
-        if (result) return result;
-        // No SW cache: try localStorage
-        return getLocalStorageTvl(path);
-      }).then(function(result) {
-        if (result) return result;
-        // No localStorage either: load from local files via fetch
-        return fetch(path).then(function(r) { return r ? r.json() : null; }).catch(function() { return null; });
-      });
-    }
-
-    // ---- ONLINE path ----
-    if (fresh) {
-      // Force fresh: network only, bust cache, fallback to offline sources
-      var url = remotePath + (remotePath.indexOf("?") !== -1 ? "&" : "?") + "refresh=" + Date.now() + "-" + Math.random().toString(16).slice(2);
-      return fetch(url, { cache: "no-store", headers: { "Cache-Control": "no-cache" } })
-        .then(function(r) {
-          if (!r.ok) throw new Error("HTTP " + r.status);
-          return r.json();
-        })
-        .catch(function() {
-          // Network failed: try SW cache → localStorage
-          return caches.match(remotePath).then(function(cached) { return cached ? cached.json() : null; })
-            .then(function(result) { return result || getLocalStorageTvl(path); })
-            .then(function(result) {
-              if (result) return result;
-              return caches.match(path).then(function(c) { return c ? c.json() : null; });
-            });
-        });
-    }
-
-    // Normal load online: SW cache → network (SW auto-caches)
-    return caches.match(remotePath).then(function(cached) {
-      if (cached) return cached.json();
-      return fetch(remotePath).then(function(r) {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      }).catch(function() {
-        // Network failed: try localStorage
-        return getLocalStorageTvl(path);
-      });
-    });
+  function normalizeFilename(file) {
+    var filename = String(file || "").split("?")[0].split("/").pop();
+    return filename
+      .replace("tvl_acc_mangium", "tvl_akasia_mangium")
+      .replace("tvl_acc_au", "tvl_akasia_au");
   }
 
-  // ---- localStorage TVL cache helpers ----
-  function getLocalStorageTvl(path) {
+  function localPathForFile(file) {
+    return "data/tvl/" + normalizeFilename(file);
+  }
+
+  function remotePathForFile(file) {
+    var filename = normalizeFilename(file);
+    return TVL_REMOTE_BASE ? TVL_REMOTE_BASE.replace(/\/$/, "") + "/" + filename : localPathForFile(filename);
+  }
+
+  function rawStorageKey(path) {
+    return RAW_STORAGE_PREFIX + normalizeFilename(path).replace(/\.json$/i, "");
+  }
+
+  function readJsonStorage(key) {
     try {
-      var key = "tvl_raw_" + path.split("/").pop().replace(".json", "");
       var raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : null;
-    } catch (e) { return null; }
+    } catch (e) {
+      console.warn("Cache localStorage tidak dapat dibaca:", key, e);
+      return null;
+    }
   }
 
-  function setLocalStorageTvl(path, json) {
+  function writeJsonStorage(key, value) {
     try {
-      var key = "tvl_raw_" + path.split("/").pop().replace(".json", "");
-      localStorage.setItem(key, JSON.stringify(json));
-    } catch (e) {}
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      console.warn("Cache localStorage tidak dapat disimpan:", key, e);
+      return false;
+    }
+  }
+
+  function getLocalStorageTvl(path) {
+    var currentKey = rawStorageKey(path);
+    var current = readJsonStorage(currentKey);
+    if (current) return current;
+
+    // Legacy key migration
+    var legacyKey = "tvl_raw_" + normalizeFilename(path).replace(/\.json$/i, "");
+    var legacy = readJsonStorage(legacyKey);
+    if (legacy) writeJsonStorage(currentKey, legacy);
+    return legacy;
   }
 
   function cacheTvlToLocalStorage(path, json) {
-    setLocalStorageTvl(path, json);
+    return writeJsonStorage(rawStorageKey(path), json);
   }
 
-  // ---- TVL signature (for change detection) ----
+  function getLocalManifest() {
+    return readJsonStorage(MANIFEST_STORAGE_KEY);
+  }
+
+  function cacheManifest(manifest) {
+    return writeJsonStorage(MANIFEST_STORAGE_KEY, manifest);
+  }
+
+  function cacheMatchJson(url) {
+    if (!global.caches || typeof global.caches.match !== "function") return Promise.resolve(null);
+    return global.caches.match(url).then(function(response) {
+      if (!response) return null;
+      return response.clone().json().catch(function() { return null; });
+    }).catch(function() { return null; });
+  }
+
+  function fetchNetworkJson(url) {
+    var separator = url.indexOf("?") === -1 ? "?" : "&";
+    var freshUrl = url + separator + "refresh=" + Date.now() + "-" + Math.random().toString(16).slice(2);
+    return fetch(freshUrl, {
+      method: "GET",
+      cache: "no-store",
+      credentials: "omit"
+    }).then(function(response) {
+      if (!response.ok) throw new Error("HTTP " + response.status + " saat mengambil " + url);
+      return response.json();
+    });
+  }
+
+  function fetchPackagedJson(path) {
+    return fetch(path, { method: "GET", cache: "default", credentials: "same-origin" })
+      .then(function(response) {
+        if (!response.ok) throw new Error("HTTP " + response.status + " saat membaca " + path);
+        return response.json();
+      });
+  }
+
+  // LocalStorage adalah sumber offline utama. Cache Storage dan berkas paket
+  // hanya dipakai sebagai fallback pemasangan pertama atau pemulihan cache.
+  function loadLocalTvlRaw(path) {
+    var stored = getLocalStorageTvl(path);
+    if (stored) return Promise.resolve(stored);
+
+    var localPath = localPathForFile(path);
+    return cacheMatchJson(localPath).then(function(cached) {
+      if (cached) return cached;
+      return fetchPackagedJson(localPath).catch(function() { return null; });
+    }).then(function(raw) {
+      if (raw) cacheTvlToLocalStorage(localPath, raw);
+      return raw;
+    });
+  }
+
+  // Normalisasi dan validasi
+
   function tvlSignature(tvl) {
     if (!tvl) return "";
-    // For berkhout model, signature includes coefficients
     if (tvl.model === "berkhout") {
       return JSON.stringify({
         id: tvl.id || "",
@@ -153,22 +182,18 @@
         coefficients: tvl.coefficients
       });
     }
-    // Legacy format with entries
     return JSON.stringify({
-      id: tvl && tvl.id || "",
-      name: tvl && tvl.name || "",
-      species: tvl && tvl.species || "",
-      version: tvl && tvl.version || "",
-      updatedAt: tvl && tvl.updatedAt || "",
-      entries: Array.isArray(tvl && tvl.entries) ? tvl.entries : []
+      id: tvl.id || "",
+      name: tvl.name || "",
+      species: tvl.species || "",
+      version: tvl.version || "",
+      updatedAt: tvl.updatedAt || "",
+      entries: Array.isArray(tvl.entries) ? tvl.entries : []
     });
   }
 
-  // ---- Normalize TVL from raw JSON (Berkhout format) ----
   function normalizeTvl(raw, filename) {
     filename = filename || "tvl.json";
-
-    // Check if TVL uses berkhout model (no entries array)
     var isBerkhout = raw && raw.model === "berkhout";
 
     if (isBerkhout) {
@@ -194,16 +219,13 @@
       };
     }
 
-    // Legacy format with entries array (table lookup)
     var sourceRows;
-    if (Array.isArray(raw)) {
-      sourceRows = raw;
-    } else {
-      sourceRows = (raw && (raw.entries || raw.data || raw.tvl || raw.rows)) || [];
-    }
+    if (Array.isArray(raw)) sourceRows = raw;
+    else sourceRows = (raw && (raw.entries || raw.data || raw.tvl || raw.rows)) || [];
 
     var entries = sourceRows.map(function(row) {
-      var circumference, volume;
+      var circumference;
+      var volume;
       if (Array.isArray(row)) {
         circumference = Number(row[0]);
         volume = Number(row[1]);
@@ -213,11 +235,10 @@
       }
       return { circumference: circumference, volume: volume };
     }).filter(function(row) {
-      return Number.isFinite(row.circumference) && Number.isFinite(row.volume)
-        && row.circumference >= 0 && row.volume >= 0;
+      return Number.isFinite(row.circumference) && Number.isFinite(row.volume) && row.circumference >= 0 && row.volume >= 0;
     }).sort(function(a, b) { return a.circumference - b.circumference; });
 
-    var baseName = (filename || "tvl").replace(/\.json$/i, "").replace(/[_-]+/g, " ").trim();
+    var baseName = filename.replace(/\.json$/i, "").replace(/[_-]+/g, " ").trim();
     var name = String((raw && (raw.name || raw.title || raw.species || raw.jenis)) || baseName || "TVL Impor").trim();
     var rawId = String((raw && raw.id) || ("tvl_" + name)).toLowerCase();
     var id = rawId.replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || ("tvl_" + Date.now());
@@ -225,7 +246,7 @@
     return {
       id: id,
       name: name,
-      species: String(raw && raw.species || raw && raw.jenis || "").trim(),
+      species: String(raw && (raw.species || raw.jenis) || "").trim(),
       normalizedSpecies: String(raw && raw.normalizedSpecies || "").trim(),
       unitCircumference: "cm",
       unitVolume: "m3",
@@ -235,33 +256,147 @@
     };
   }
 
-  // ---- Bundled TVLs ----
+  function validateTvl(tvl) {
+    if (!tvl || !tvl.id) throw new Error("TVL tidak memiliki ID yang valid.");
+    if (tvl.model === "berkhout") {
+      if (!tvl.coefficients || !Number.isFinite(tvl.coefficients.a) || !Number.isFinite(tvl.coefficients.b) || tvl.coefficients.a === 0 || tvl.coefficients.b === 0) {
+        throw new Error("TVL berkhout tidak memiliki koefisien a dan b yang valid.");
+      }
+    } else if (!Array.isArray(tvl.entries) || !tvl.entries.length) {
+      throw new Error("TVL tidak memiliki pasangan keliling dan volume yang valid.");
+    }
+    return tvl;
+  }
+
+  function normalizeManifest(raw) {
+    var items = Array.isArray(raw) ? raw : (raw && raw.files) || [];
+    var files = items.map(function(item) {
+      return typeof item === "string" ? item : (item && item.file);
+    }).filter(Boolean).map(function(file) {
+      return "tvl/" + normalizeFilename(file);
+    });
+
+    if (!files.length) throw new Error("Indeks TVL kosong.");
+
+    return {
+      version: Array.isArray(raw) ? null : String(raw.version || raw.indexVersion || "").trim() || null,
+      updatedAt: Array.isArray(raw) ? null : String(raw.updatedAt || raw.updated_at || "").trim() || null,
+      source: Array.isArray(raw) ? null : (raw.source || null),
+      files: files
+    };
+  }
+
+  function fallbackManifest() {
+    return {
+      version: null,
+      updatedAt: null,
+      source: "bundled",
+      files: FALLBACK_TVL_FILES.map(function(file) { return "tvl/" + normalizeFilename(file); })
+    };
+  }
+
+    // Memuat manifest dan TVL
+
+  function loadLocalManifest() {
+    var stored = getLocalManifest();
+    if (stored) {
+      try { return Promise.resolve(normalizeManifest(stored)); }
+      catch (e) { console.warn("Manifest localStorage rusak, memakai paket lokal.", e); }
+    }
+
+    return cacheMatchJson(TVL_INDEX_PATH).then(function(cached) {
+      if (cached) return cached;
+      return fetchPackagedJson(TVL_INDEX_PATH).catch(function() { return null; });
+    }).then(function(raw) {
+      if (!raw) return fallbackManifest();
+      var manifest = normalizeManifest(raw);
+      cacheManifest(manifest);
+      return manifest;
+    }).catch(function() {
+      return fallbackManifest();
+    });
+  }
+
+  function loadRemoteManifest() {
+    var url = TVL_REMOTE_INDEX || TVL_INDEX_PATH;
+    return fetchNetworkJson(url).then(function(raw) {
+      var manifest = normalizeManifest(raw);
+      cacheManifest(manifest);
+      return manifest;
+    });
+  }
+
+  function loadTvlsFromManifest(manifest, source) {
+    var loaded = {};
+    var isRemote = source === "remote";
+
+    var jobs = manifest.files.map(function(file) {
+      var filename = normalizeFilename(file);
+      var localPath = localPathForFile(filename);
+      var promise = isRemote
+        ? fetchNetworkJson(remotePathForFile(filename))
+        : loadLocalTvlRaw(localPath);
+
+      return promise.then(function(raw) {
+        if (!raw) throw new Error("Data " + filename + " tidak tersedia.");
+        var tvl = validateTvl(normalizeTvl(raw, filename));
+        loaded[tvl.id] = tvl;
+        cacheTvlToLocalStorage(localPath, raw);
+      }).catch(function(error) {
+        if (isRemote) throw new Error("Gagal mengambil " + filename + ": " + error.message);
+        console.warn("TVL lokal tidak dapat dimuat:", filename, error);
+      });
+    });
+
+    return Promise.all(jobs).then(function() { return loaded; });
+  }
+
   function bundledTvls() {
-    var source = Array.isArray(window.KLEM_KAYU_BUILTIN_TVLS) ? window.KLEM_KAYU_BUILTIN_TVLS : [];
+    var source = Array.isArray(global.BLIFOREST_BUILTIN_TVLS) ? global.BLIFOREST_BUILTIN_TVLS : [];
     var loaded = {};
     source.forEach(function(raw, index) {
       try {
-        var tvl = normalizeTvl(raw, "tvl-bundle-" + (index + 1) + ".json");
-        // For berkhout model, we need coefficients
-        if (tvl.model === "berkhout") {
-          if (tvl.coefficients && tvl.coefficients.a && tvl.coefficients.b) {
-            loaded[tvl.id] = tvl;
-          }
-        } else if (tvl.entries && tvl.entries.length) {
-          // Legacy format needs entries
-          loaded[tvl.id] = tvl;
-        }
-      } catch (e) { /* skip invalid */ }
+        var tvl = validateTvl(normalizeTvl(raw, "tvl-bundle-" + (index + 1) + ".json"));
+        loaded[tvl.id] = tvl;
+      } catch (e) { /* lewati data bundle yang rusak */ }
     });
     return loaded;
+  }
+
+  function incomingIsNewer(current, incoming) {
+    if (!current) return true;
+    if (tvlSignature(current) === tvlSignature(incoming)) return false;
+
+    var currentDate = Date.parse(current.updatedAt || "");
+    var incomingDate = Date.parse(incoming.updatedAt || "");
+    if (Number.isFinite(incomingDate) && (!Number.isFinite(currentDate) || incomingDate > currentDate)) return true;
+
+    if (incoming.version && current.version && incoming.version !== current.version) {
+      return String(incoming.version).localeCompare(String(current.version), undefined, { numeric: true }) > 0;
+    }
+
+    // Jika versi/tanggal tidak tersedia, pertahankan data lokal.
+    return false;
+  }
+
+  function mergePreferredLocalTvls(loaded) {
+    var changedIds = [];
+    var state = App.storage.state;
+    Object.keys(loaded).forEach(function(id) {
+      if (incomingIsNewer(state.tvls[id], loaded[id])) {
+        state.tvls[id] = loaded[id];
+        changedIds.push(id);
+      }
+    });
+    return changedIds;
   }
 
   function mergeMissingTvls(loaded) {
     var changed = false;
     var state = App.storage.state;
-    Object.values(loaded).forEach(function(tvl) {
-      if (!state.tvls[tvl.id]) {
-        state.tvls[tvl.id] = tvl;
+    Object.keys(loaded).forEach(function(id) {
+      if (!state.tvls[id]) {
+        state.tvls[id] = loaded[id];
         changed = true;
       }
     });
@@ -271,144 +406,68 @@
   function replaceTvls(loaded) {
     var changedIds = [];
     var state = App.storage.state;
-    Object.values(loaded).forEach(function(tvl) {
-      var current = state.tvls[tvl.id];
-      if (!current || tvlSignature(current) !== tvlSignature(tvl)) {
-        state.tvls[tvl.id] = tvl;
-        changedIds.push(tvl.id);
+    Object.keys(loaded).forEach(function(id) {
+      var current = state.tvls[id];
+      if (!current || tvlSignature(current) !== tvlSignature(loaded[id])) {
+        state.tvls[id] = loaded[id];
+        changedIds.push(id);
       }
     });
     return changedIds;
   }
 
-  // ---- Load manifest ----
-  function loadTvlManifest(fresh) {
-    // If offline, skip network fetch entirely and use local manifest or fallback
-    if (!navigator.onLine && !fresh) {
-      return caches.match("data/tvl-index.json").then(function(cached) {
-        if (cached) return cached.json();
-        // No local manifest: use fallback files list directly
-        return null;
-      }).then(function(raw) {
-        if (raw) {
-          var items = Array.isArray(raw) ? raw : (raw && raw.files) || [];
-          var files = items.map(function(item) {
-            return typeof item === "string" ? item : (item && item.file);
-          }).filter(Boolean);
-          return { version: null, updatedAt: null, files: files };
-        }
-        // Fallback: map old manifest names to current filenames
-        return {
-          version: null, updatedAt: null,
-          files: FALLBACK_TVL_FILES.map(function(f) { return f.replace("data/", ""); })
-        };
-      });
-    }
-
-    var manifestPath = TVL_REMOTE_BASE
-      ? TVL_REMOTE_BASE.replace("/tvl", "/tvl-index.json").replace("/data/tvl", "/data/tvl-index.json")
-      : TVL_INDEX_PATH;
-    return fetchJson(manifestPath, fresh).then(function(raw) {
-      var items = Array.isArray(raw) ? raw : (raw && raw.files) || [];
-      if (!items.length) throw new Error("Indeks TVL kosong");
-      var version = Array.isArray(raw) ? null : String(raw.version || raw.indexVersion || "").trim() || null;
-      var updatedAt = Array.isArray(raw) ? null : String(raw.updatedAt || raw.updated_at || "").trim() || null;
-      var files = items.map(function(item) {
-        return typeof item === "string" ? item : (item && item.file);
-      }).filter(Boolean);
-      return { version: version, updatedAt: updatedAt, files: files };
-    }).catch(function(e) {
-      if (fresh) throw e;
-      console.warn("Indeks TVL tidak dapat dimuat:", e);
-      return { version: null, updatedAt: null, files: FALLBACK_TVL_FILES.map(function(f) { return f.replace("data/", ""); }) };
-    });
-  }
-
-  function loadTvlsFromManifest(manifest, fresh) {
-    var state = App.storage.state;
-    var loaded = {};
-    var promises = manifest.files.map(function(file) {
-      // Normalize filename: manifest may have old names, map to actual local files
-      var filename = file.split("/").pop();
-      // Map old acc_* names to akasia_*
-      filename = filename.replace("tvl_acc_mangium", "tvl_akasia_mangium")
-                         .replace("tvl_acc_au", "tvl_akasia_au");
-      var localPath = "data/" + filename;
-      var remotePath = TVL_REMOTE_BASE ? (TVL_REMOTE_BASE + "/" + filename) : localPath;
-
-      return fetchJson(remotePath, fresh).then(function(raw) {
-        var tvl = normalizeTvl(raw, filename);
-        // Validate TVL
-        if (tvl.model === "berkhout") {
-          if (!tvl.coefficients || !tvl.coefficients.a || !tvl.coefficients.b) {
-            throw new Error("TVL berkhout tidak memiliki koefisien yang valid");
-          }
-        } else if (!tvl.entries || !tvl.entries.length) {
-          throw new Error("TVL tidak memiliki baris yang valid");
-        }
-        loaded[tvl.id] = tvl;
-        // Cache raw JSON to localStorage for offline use
-        cacheTvlToLocalStorage(localPath, raw);
-      }).catch(function(e) {
-        if (fresh) throw new Error("Gagal mengambil " + filename + ": " + e.message);
-        console.warn("Gagal memuat " + filename + ":", e);
-      });
-    });
-    return Promise.all(promises).then(function() { return loaded; });
-  }
-
-  // ---- Main loader ----
+  // Boot lokal: tidak menunggu GitHub. State dari localStorage adalah sumber utama.
   function loadBuiltinTvls() {
-    var bundled = bundledTvls();
-    mergeMissingTvls(bundled);
-
     var state = App.storage.state;
-    return loadTvlManifest(false).then(function(manifest) {
-      return loadTvlsFromManifest(manifest, false).then(function(fetched) {
-        mergeMissingTvls(fetched);
-        var loadedIds = Object.keys(bundled).concat(Object.keys(fetched));
-        var sync = state.tvlSync;
-        sync.indexVersion = sync.indexVersion || manifest.version || null;
-        sync.serverUpdatedAt = sync.serverUpdatedAt || manifest.updatedAt || null;
-        sync.managedIds = Array.from(new Set((sync.managedIds || []).concat(loadedIds)));
+    state.tvls = state.tvls && typeof state.tvls === "object" ? state.tvls : {};
+    state.tvlSync = state.tvlSync || {};
+
+    mergeMissingTvls(bundledTvls());
+
+    return loadLocalManifest().then(function(manifest) {
+      return loadTvlsFromManifest(manifest, "local").then(function(loaded) {
+        var changedIds = mergePreferredLocalTvls(loaded);
+        var loadedIds = Object.keys(loaded);
+
+        state.tvlSync.indexVersion = state.tvlSync.indexVersion || manifest.version || null;
+        state.tvlSync.serverUpdatedAt = state.tvlSync.serverUpdatedAt || manifest.updatedAt || null;
+        state.tvlSync.managedIds = Array.from(new Set((state.tvlSync.managedIds || []).concat(loadedIds)));
+        state.tvlSync.dataSource = navigator.onLine ? "local-ready" : "local-offline";
+
+        if (changedIds.length) recalculateTreeVolumes(changedIds);
         App.storage.saveState();
+
+        return { manifest: manifest, loadedIds: loadedIds, changedTvlIds: changedIds, source: "local" };
       });
-    }).catch(function(e) {
-      console.warn("TVL JSON tidak dapat dimuat:", e);
+    }).catch(function(error) {
+      console.warn("TVL lokal tidak dapat dimuat sepenuhnya:", error);
+      App.storage.saveState();
+      return { manifest: fallbackManifest(), loadedIds: Object.keys(state.tvls), changedTvlIds: [], source: "state" };
     });
   }
 
-  // ---- Volume lookup (supports both legacy and berkhout) ----
+    // Lookup dan hitung ulang
+
   function lookupVolume(speciesId, circumference) {
     if (!speciesId || !Number.isFinite(circumference) || circumference < 0) return null;
     var species = App.storage.getSpecies(speciesId);
     var tvl = species ? App.storage.state.tvls[species.tvlId] : null;
     if (!tvl) return null;
 
-    // Check if TVL uses berkhout model
     if (tvl.model === "berkhout") {
-      var volume = calculateVolume(tvl, circumference);
-      var diameter = calculateDiameter(tvl, circumference);
-      var height = calculateHeight(tvl, circumference);
-      if (volume === null) return null;
-      return {
-        volume: volume,
-        diameter: diameter,
-        height: height,
-        circumference: circumference,
-        exact: true
-      };
+      var metrics = calculateTreeMetrics(tvl, circumference);
+      if (metrics.volume === null) return null;
+      metrics.exact = true;
+      return metrics;
     }
 
-    // Legacy table lookup
     if (!tvl.entries || !tvl.entries.length) return null;
     var nearest = tvl.entries[0];
     for (var i = 0; i < tvl.entries.length; i++) {
       var row = tvl.entries[i];
-      if (Math.abs(row.circumference - circumference) < Math.abs(nearest.circumference - circumference)) {
-        nearest = row;
-      }
+      if (Math.abs(row.circumference - circumference) < Math.abs(nearest.circumference - circumference)) nearest = row;
     }
+
     return {
       volume: Number(nearest.volume),
       diameter: calculateDiameter(tvl, circumference),
@@ -418,18 +477,18 @@
     };
   }
 
-  // ---- Recalculate volumes ----
   function recalculateTreeVolumes(changedTvlIds) {
     var changedSet = Array.isArray(changedTvlIds) ? new Set(changedTvlIds) : null;
     var result = { scanned: 0, updated: 0, unchanged: 0, failed: 0, totalBefore: 0, totalAfter: 0 };
     var updatedAt = new Date().toISOString();
     var state = App.storage.state;
 
-    state.clamps.forEach(function(clamp) {
+    (state.clamps || []).forEach(function(clamp) {
       (clamp.trees || []).forEach(function(tree) {
         var species = App.storage.getSpecies(tree.speciesId);
         var tvlId = species && species.tvlId;
         if (!tvlId || (changedSet && !changedSet.has(tvlId))) return;
+
         result.scanned++;
         var before = Number(tree.volume) || 0;
         var lookup = lookupVolume(tree.speciesId, Number(tree.circumference));
@@ -440,9 +499,8 @@
 
         var tvl = state.tvls[tvlId];
         var isBerkhout = tvl && tvl.model === "berkhout";
-
         var changed = Math.abs(before - lookup.volume) > 1e-12 ||
-          (isBerkhout ? false : (Number(tree.tvlCircumference) !== Number(lookup.matchedCircumference))) ||
+          (!isBerkhout && Number(tree.tvlCircumference) !== Number(lookup.matchedCircumference)) ||
           tree.tvlId !== tvlId;
 
         tree.volume = lookup.volume;
@@ -451,7 +509,6 @@
         tree.tvlVersion = (state.tvls[tvlId] && state.tvls[tvlId].version) || (state.tvlSync && state.tvlSync.indexVersion) || null;
         tree.volumeUpdatedAt = updatedAt;
 
-        // Save diameter and height for berkhout model
         if (isBerkhout) {
           tree.diameter = lookup.diameter;
           tree.height = lookup.height;
@@ -460,27 +517,29 @@
         if (changed) result.updated++; else result.unchanged++;
       });
     });
+
     return result;
   }
 
-  // ---- Refresh TVLs (online) ----
+    // Sinkronisasi online
+
   function refreshTvls(options) {
     options = options || {};
-    if (!navigator.onLine) return Promise.resolve(null);
+    if (refreshInFlight) return refreshInFlight;
+    if (navigator.onLine === false) return Promise.reject(new Error("Perangkat sedang offline. Data lokal tetap digunakan."));
 
     var button = options.button;
     var originalText = button && button.textContent;
     if (button) { button.disabled = true; button.textContent = "Memeriksa…"; }
 
-    return loadTvlManifest(true).then(function(manifest) {
-      return loadTvlsFromManifest(manifest, true).then(function(loaded) {
+    refreshInFlight = loadRemoteManifest().then(function(manifest) {
+      return loadTvlsFromManifest(manifest, "remote").then(function(loaded) {
         var loadedIds = Object.keys(loaded);
         if (!loadedIds.length) throw new Error("Server tidak mengembalikan TVL yang valid.");
 
         var state = App.storage.state;
         var changedTvlIds = loadedIds.filter(function(id) {
-          var current = state.tvls[id];
-          return !current || tvlSignature(current) !== tvlSignature(loaded[id]);
+          return !state.tvls[id] || tvlSignature(state.tvls[id]) !== tvlSignature(loaded[id]);
         });
 
         loadedIds.forEach(function(id) { state.tvls[id] = loaded[id]; });
@@ -502,50 +561,50 @@
         state.tvlSync.lastCheckedAt = checkedAt;
         state.tvlSync.lastUpdatedAt = changedTvlIds.length ? checkedAt : (state.tvlSync.lastUpdatedAt || null);
         state.tvlSync.managedIds = loadedIds.concat(retained);
+        state.tvlSync.dataSource = "github";
+        state.tvlSync.lastSyncError = null;
 
-        var calc = recalculateTreeVolumes(changedTvlIds);
+        var calculation = recalculateTreeVolumes(changedTvlIds);
         App.storage.saveState();
 
-        navigator.serviceWorker && navigator.serviceWorker.getRegistration().then(function(reg) {
-          reg && reg.update && reg.update();
-        }).catch(function() {});
+        if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+          navigator.serviceWorker.getRegistration().then(function(registration) {
+            if (registration && registration.update) registration.update();
+          }).catch(function() {});
+        }
 
-        return { manifest: manifest, changedTvlIds: changedTvlIds, calculation: calc };
+        return { manifest: manifest, changedTvlIds: changedTvlIds, calculation: calculation, source: "github" };
       });
-    }).catch(function(e) {
-      console.error("Pembaruan TVL gagal:", e);
+    }).catch(function(error) {
+      console.error("Pembaruan TVL gagal; data lokal dipertahankan:", error);
       var state = App.storage.state;
-      if (state.tvlSync) {
-        state.tvlSync.lastCheckedAt = new Date().toISOString();
-        App.storage.saveState();
-      }
-      throw e;
+      state.tvlSync = state.tvlSync || {};
+      state.tvlSync.lastCheckedAt = new Date().toISOString();
+      state.tvlSync.dataSource = "local-fallback";
+      state.tvlSync.lastSyncError = error.message || String(error);
+      App.storage.saveState();
+      throw error;
     }).finally(function() {
       if (button) { button.disabled = false; button.textContent = originalText; }
+      refreshInFlight = null;
     });
+
+    return refreshInFlight;
   }
 
-  // ---- Import TVL from file ----
+    // Impor manual
+
   function importTvlFromFile(file) {
     return file.text().then(function(text) {
       var raw = JSON.parse(text);
-      var tvl = normalizeTvl(raw, file.name);
-
-      // Validate imported TVL
-      if (tvl.model === "berkhout") {
-        if (!tvl.coefficients || !tvl.coefficients.a || !tvl.coefficients.b) {
-          throw new Error("TVL berkhout tidak memiliki koefisien a dan b yang valid.");
-        }
-      } else if (!tvl.entries || !tvl.entries.length) {
-        throw new Error("TVL tidak memiliki pasangan keliling dan volume yang valid.");
-      }
-
+      var tvl = validateTvl(normalizeTvl(raw, file.name));
       var state = App.storage.state;
       var changed = !state.tvls[tvl.id] || tvlSignature(state.tvls[tvl.id]) !== tvlSignature(tvl);
       state.tvls[tvl.id] = tvl;
-      var calc = changed ? recalculateTreeVolumes([tvl.id]) : { updated: 0 };
+      cacheTvlToLocalStorage(file.name, raw);
+      var calculation = changed ? recalculateTreeVolumes([tvl.id]) : { updated: 0 };
       App.storage.saveState();
-      return { tvl: tvl, changed: changed, calculation: calc };
+      return { tvl: tvl, changed: changed, calculation: calculation };
     });
   }
 
@@ -559,11 +618,13 @@
     recalculateTreeVolumes: recalculateTreeVolumes,
     importTvlFromFile: importTvlFromFile,
     replaceTvls: replaceTvls,
-    // Expose calculation functions
     calculateVolume: calculateVolume,
     calculateDiameter: calculateDiameter,
     calculateHeight: calculateHeight,
-    calculateTreeMetrics: calculateTreeMetrics
+    calculateTreeMetrics: calculateTreeMetrics,
+    localPathForFile: localPathForFile,
+    getLocalStorageTvl: getLocalStorageTvl,
+    loadLocalManifest: loadLocalManifest
   };
 
   global.App = App;

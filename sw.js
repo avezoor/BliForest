@@ -1,4 +1,11 @@
-const CACHE_NAME = "BliForest";
+"use strict";
+
+// Ubah versi cache setiap kali shell aplikasi berubah agar perangkat yang
+// sedang online mengambil HTML/CSS/JS terbaru, sedangkan mode offline tetap
+// memakai salinan terakhir yang berhasil disimpan.
+const CACHE_PREFIX = "BliForest-";
+const CACHE_NAME = CACHE_PREFIX + "BliForest-1.4.1-2026.07.18-21:28";
+
 const CORE_FILES = [
   "./",
   "./index.html",
@@ -20,12 +27,12 @@ const CORE_FILES = [
   "./icons/pwa/icon-192.png",
   "./icons/pwa/icon-512.png",
   "./icons/favicon/favicon.svg",
+  "./icons/favicon/favicon.ico",
+  "./icons/favicon/favicon-96x96.png",
+  "./icons/favicon/apple-touch-icon.png",
   "./data/bkph.json",
   "./data/bkph-bundle.js",
-  "./data/tvl-index.json"
-];
-
-const TVL_FILES = [
+  "./data/tvl-index.json",
   "./data/tvl/tvl_jati.json",
   "./data/tvl/tvl_sengon.json",
   "./data/tvl/tvl_mahoni.json",
@@ -43,104 +50,103 @@ const TVL_FILES = [
   "./data/tvl/tvl_sonokeling.json"
 ];
 
-const ALL_FILES = CORE_FILES.concat(TVL_FILES);
-
-// Timeout helper: 10 detik untuk network request
-async function fetchWithTimeout(request, timeoutMs = 10000) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(request, { signal: controller.signal });
-    clearTimeout(timeout);
-    return response;
-  } catch (error) {
-    clearTimeout(timeout);
-    throw error;
-  }
-}
-
 self.addEventListener("install", event => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    await cache.addAll(ALL_FILES);
-  })());
-  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(CORE_FILES))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)));
+    await Promise.all(
+      keys
+        .filter(key => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
+        .map(key => caches.delete(key))
+    );
     await self.clients.claim();
   })());
 });
 
+function normalizedCacheKey(request) {
+  const url = new URL(request.url);
+  url.searchParams.delete("refresh");
+  return url.toString();
+}
+
+function cacheable(response) {
+  return response && response.ok && (response.type === "basic" || response.type === "cors" || response.type === "default");
+}
+
+async function saveResponse(request, response) {
+  if (!cacheable(response)) return response;
+  const cache = await caches.open(CACHE_NAME);
+  await cache.put(normalizedCacheKey(request), response.clone());
+  return response;
+}
+
+async function networkFirst(request, fallbackUrl) {
+  try {
+    const response = await fetch(request);
+    return await saveResponse(request, response);
+  } catch (error) {
+    const cached = await caches.match(normalizedCacheKey(request));
+    if (cached) return cached;
+    if (fallbackUrl) {
+      const fallback = await caches.match(fallbackUrl);
+      if (fallback) return fallback;
+    }
+    throw error;
+  }
+}
+
+async function cacheFirstWithRefresh(request) {
+  const key = normalizedCacheKey(request);
+  const cached = await caches.match(key);
+  const update = fetch(request)
+    .then(response => saveResponse(request, response))
+    .catch(() => null);
+
+  if (cached) {
+    // Perbarui di belakang layar tanpa menahan tampilan gambar/icon.
+    update.catch(() => null);
+    return cached;
+  }
+
+  const response = await update;
+  if (response) return response;
+  throw new Error("Sumber tidak tersedia saat offline.");
+}
+
 self.addEventListener("fetch", event => {
-  if (event.request.method !== "GET") return;
+  const request = event.request;
+  if (request.method !== "GET") return;
 
-  const url = new URL(event.request.url);
-  const isTvlJson = url.pathname.includes("/data/tvl/") && url.pathname.endsWith(".json");
+  const url = new URL(request.url);
+  const isNavigation = request.mode === "navigate";
+  const isImage = request.destination === "image";
+  const isSameOrigin = url.origin === self.location.origin;
+  const isGithubRaw = url.hostname === "raw.githubusercontent.com";
 
-  // TVL JSON: network-first saat online (biar selalu update), fallback ke cache jika timeout atau offline
-  // Timeout 10 detik untuk mencegah stuck selamanya
-  if (isTvlJson) {
-    event.respondWith(
-      fetchWithTimeout(event.request, 10000)
-        .then(response => {
-          if (response && response.status === 200) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-          }
-          return response;
-        })
-        .catch(() => {
-          // Timeout atau offline: serve dari cache
-          return caches.match(event.request);
-        })
-    );
+  if (isNavigation) {
+    event.respondWith(networkFirst(request, "./index.html"));
     return;
   }
 
-  // BKPH JSON: cache-first (jarang berubah)
-  const isBkphJson = url.pathname.includes("/data/") && url.pathname.endsWith(".json");
-  if (isBkphJson) {
-    event.respondWith(
-      caches.match(event.request).then(cached => {
-        if (cached) return cached;
-        return fetchWithTimeout(event.request, 10000).then(response => {
-          if (response && response.status === 200) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-          }
-          return response;
-        });
-      })
-    );
+  if (isImage && isSameOrigin) {
+    event.respondWith(cacheFirstWithRefresh(request));
     return;
   }
 
-  if (event.request.mode === "navigate") {
-    event.respondWith(
-      fetchWithTimeout(event.request, 10000)
-        .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put("./index.html", copy));
-          return response;
-        })
-        .catch(() => caches.match("./index.html"))
-    );
-    return;
+  // Semua shell aplikasi dan JSON lokal memakai network-first ketika online.
+  // Jika jaringan gagal, salinan Cache Storage digunakan agar PWA tetap penuh.
+  if (isSameOrigin || isGithubRaw) {
+    event.respondWith(networkFirst(request));
   }
+});
 
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetchWithTimeout(event.request, 10000).then(response => {
-        if (!response || response.status !== 200 || response.type === "opaque") return response;
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-        return response;
-      });
-    })
-  );
+self.addEventListener("message", event => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });

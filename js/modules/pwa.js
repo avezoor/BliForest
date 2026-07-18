@@ -1,23 +1,34 @@
 "use strict";
 
 // ============================================================
-// PWA Module — install prompt & connectivity
+// PWA Module — instalasi, konektivitas, dan sinkronisasi otomatis
 // ============================================================
 
 (function(global) {
   var App = global.App || {};
   var deferredInstallPrompt = null;
+  var syncInProgress = false;
+  var onlineHandlerBound = false;
 
-  function updateConnectivity() {
+  function updateConnectivity(syncing) {
     var dot = document.getElementById("online-dot");
     var label = document.getElementById("online-label");
     var online = navigator.onLine;
+
     if (dot) dot.classList.toggle("online", online);
-    if (label) label.textContent = online ? "Mode Online" : "Mode Offline";
+    if (!label) return;
+
+    if (!online) {
+      label.textContent = "Mode Offline • data lokal";
+    } else if (syncing || syncInProgress) {
+      label.textContent = "Online • menyinkronkan";
+    } else {
+      label.textContent = "Mode Online • data tersimpan";
+    }
   }
 
   function isStandalone() {
-    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    return global.matchMedia("(display-mode: standalone)").matches || global.navigator.standalone === true;
   }
 
   function updateInstallButton() {
@@ -50,74 +61,114 @@
 
   function requestPersistentStorage() {
     if (!navigator.storage || !navigator.storage.persist) return;
-    navigator.storage.persist().catch(function(e) { console.warn("Penyimpanan persisten tidak dapat diminta:", e); });
+    navigator.storage.persist().catch(function(error) {
+      console.warn("Penyimpanan persisten tidak dapat diminta:", error);
+    });
   }
 
   function registerServiceWorker() {
     if (!("serviceWorker" in navigator) || !/^https?:$/.test(location.protocol)) return;
+
+    var hadController = !!navigator.serviceWorker.controller;
     var reloading = false;
     navigator.serviceWorker.addEventListener("controllerchange", function() {
-      if (reloading) return;
+      // Service worker lama benar-benar diganti oleh versi aplikasi baru.
+      if (!hadController || reloading) return;
       reloading = true;
-      window.location.reload();
+      global.location.reload();
     });
-    navigator.serviceWorker.register("./sw.js").catch(function(e) { console.warn("Service worker gagal didaftarkan:", e); });
+
+    navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
+      .then(function(registration) {
+        registration.update().catch(function() {});
+      })
+      .catch(function(error) {
+        console.warn("Service worker gagal didaftarkan:", error);
+      });
+  }
+
+  function refreshRenderedData() {
+    if (App.components && typeof App.components.renderAll === "function") App.components.renderAll();
+    if (App.components && typeof App.components.updateTvlSyncStatus === "function") App.components.updateTvlSyncStatus();
+  }
+
+  function syncWhenOnline(options) {
+    options = options || {};
+    var showToast = !!options.showToast;
+    var button = options.button || null;
+
+    if (!navigator.onLine) {
+      updateConnectivity(false);
+      refreshRenderedData();
+      if (showToast) App.components.showToast("Perangkat offline. Aplikasi memakai data yang tersimpan di perangkat.");
+      return Promise.resolve({ offline: true, changedTvlIds: [] });
+    }
+
+    if (syncInProgress) return Promise.resolve({ pending: true, changedTvlIds: [] });
+
+    syncInProgress = true;
+    updateConnectivity(true);
+
+    return App.tvl.refreshTvls({ button: button }).then(function(result) {
+      refreshRenderedData();
+      updateConnectivity(false);
+
+      var changed = result && result.changedTvlIds ? result.changedTvlIds.length : 0;
+      if (showToast) {
+        if (changed) {
+          App.components.showToast("Sinkronisasi selesai: " + changed + " TVL diperbarui dan disimpan untuk mode offline.");
+        } else {
+          App.components.showToast("Sinkronisasi selesai. Data lokal sudah menggunakan versi terbaru.");
+        }
+      } else if (changed) {
+        App.components.showToast(changed + " TVL baru telah diperbarui dan disimpan secara lokal.");
+      }
+      return result;
+    }).catch(function(error) {
+      refreshRenderedData();
+      updateConnectivity(false);
+      if (showToast) {
+        App.components.showToast("Server tidak dapat dijangkau. Data lokal tetap digunakan.");
+      }
+      console.warn("Sinkronisasi otomatis gagal; memakai data lokal:", error);
+      return { error: error, changedTvlIds: [], localFallback: true };
+    }).finally(function() {
+      syncInProgress = false;
+      updateConnectivity(false);
+    });
   }
 
   function initPwa() {
-    window.addEventListener("beforeinstallprompt", function(e) {
-      e.preventDefault();
-      deferredInstallPrompt = e;
+    global.addEventListener("beforeinstallprompt", function(event) {
+      event.preventDefault();
+      deferredInstallPrompt = event;
       updateInstallButton();
     });
-    window.addEventListener("appinstalled", function() {
+
+    global.addEventListener("appinstalled", function() {
       deferredInstallPrompt = null;
       updateInstallButton();
       App.components.showToast("Aplikasi berhasil dipasang di perangkat.");
     });
-    window.addEventListener("online", updateConnectivity);
-    window.addEventListener("offline", updateConnectivity);
+
+    if (!onlineHandlerBound) {
+      onlineHandlerBound = true;
+      global.addEventListener("online", function() {
+        updateConnectivity(true);
+        syncWhenOnline({ showToast: false, reason: "reconnect" });
+      });
+      global.addEventListener("offline", function() {
+        updateConnectivity(false);
+        App.components.showToast("Koneksi terputus. Aplikasi beralih ke data lokal.");
+      });
+    }
+
+    updateConnectivity(false);
   }
 
   function refreshApplication() {
-    var btn = document.getElementById("refresh-all-btn");
-    var original = btn && btn.textContent;
-    if (btn) { btn.disabled = true; btn.textContent = navigator.onLine ? "Menyinkronkan…" : "Menyegarkan…"; }
-
-    if (navigator.onLine) {
-      App.tvl.refreshTvls({ showResultToast: false }).then(function(result) {
-        App.components.updateTvlSyncStatus();
-        updateConnectivity();
-        if (result && result.changedTvlIds && result.changedTvlIds.length) {
-          App.components.showToast("Sinkronisasi selesai: " + result.changedTvlIds.length + " TVL berubah dan " + (result.calculation && result.calculation.scanned || 0) + " pohon dihitung ulang.");
-        } else {
-          App.components.showToast("Sinkronisasi selesai. Data lokal dan TVL sudah terbaru.");
-        }
-      }).catch(function(err) {
-        App.components.showToast("Sinkronisasi gagal: " + (err.message || "Error tidak diketahui"));
-      }).finally(function() {
-        if (btn) { btn.disabled = false; btn.textContent = original; }
-      });
-    } else {
-      App.storage.state = App.storage.loadState();
-      App.tvl.loadBuiltinTvls().then(function() {
-        var bundled = App.tvl.bundledTvls();
-        var changed = App.tvl.replaceTvls(bundled);
-        App.storage.state.tvlSync.managedIds = Array.from(new Set(
-          (App.storage.state.tvlSync && App.storage.state.tvlSync.managedIds || []).concat(Object.keys(bundled))
-        ));
-        App.tvl.recalculateTreeVolumes(changed.length ? changed : Object.keys(App.storage.state.tvls));
-        App.storage.saveState();
-        App.components.updateTvlSyncStatus();
-        updateConnectivity();
-        var msg = changed.length ? " " + changed.length + " TVL bawaan diperbarui;" : "";
-        App.components.showToast("Mode offline disegarkan." + msg);
-      }).catch(function() {
-        App.components.showToast("Server tidak dapat dijangkau. Aplikasi disegarkan dari data lokal.");
-      }).finally(function() {
-        if (btn) { btn.disabled = false; btn.textContent = original; }
-      });
-    }
+    var button = document.getElementById("refresh-all-btn");
+    return syncWhenOnline({ showToast: true, button: button, reason: "manual" });
   }
 
   App.pwa = {
@@ -128,7 +179,8 @@
     installApp: installApp,
     requestPersistentStorage: requestPersistentStorage,
     registerServiceWorker: registerServiceWorker,
-    refreshApplication: refreshApplication
+    refreshApplication: refreshApplication,
+    syncWhenOnline: syncWhenOnline
   };
 
   global.App = App;
