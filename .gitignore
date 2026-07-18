@@ -33,3 +33,6 @@ rekap-*.xls
 
 # ---- Project specifics ----
 *.log
+
+# ---- Office temp files ----
+.~lock*

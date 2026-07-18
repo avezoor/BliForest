@@ -162,6 +162,17 @@
   // ---- Clamp form ----
   function bindClampForm() {
     var el = App.components.el;
+    var form = el("clamp-form");
+    var page = document.getElementById("page-clamps");
+
+    if (form && page) {
+      var inputs = form.querySelectorAll("input, select, textarea");
+      inputs.forEach(function(input) {
+        input.addEventListener("focus", function() { page.classList.add("form-focused"); });
+        input.addEventListener("blur", function() { page.classList.remove("form-focused"); });
+      });
+    }
+
     // Render BKPH select
     var bkphKeys = Object.keys(App.storage.bkphData || {}).sort(function(a, b) { return a.localeCompare(b, "id"); });
     el("clamp-bkph").innerHTML = '<option value="">Pilih BKPH</option>' +
@@ -250,10 +261,13 @@
     if (action === "toggle-clamp") {
       var clamp = state.clamps.find(function(c) { return c.id === id; });
       if (!clamp) return;
+      var page = document.getElementById("page-clamps");
       if (App.storage.expandedClamps.has(clamp.id)) {
         App.storage.expandedClamps.delete(clamp.id);
+        if (page) page.classList.remove("viewing-clamp");
       } else {
         App.storage.expandedClamps.add(clamp.id);
+        if (page) page.classList.add("viewing-clamp");
       }
       App.components.renderClamps();
       var card = document.querySelector('[data-clamp-id="' + clamp.id + '"]');

@@ -2,16 +2,6 @@
 
 Aplikasi web Progressive Web App (PWA) untuk pencatatan klem pohon dan perhitungan volume kayu berbasis formule Berkhout (TVL). Dirancang **offline-first** dengan sinkronisasi data otomatis dari GitHub.
 
----
-
-## Info Versi
-
-**Versi:** `1.4.1`  
-**Update:** `18 Juli 2026, 21.28 WIB`  
-**Cache:** `BliForest-1.4.1-2026.07.18`
-
----
-
 ## Fitur
 
 - `[VOL]` Volume - Hitung volume pohon dengan formule Berkhout
@@ -88,14 +78,14 @@ python update.py
 Atau dengan parameter langsung:
 
 ```bash
-python update.py 1.4.0
+python update.py 1.0.0
 ```
 
 Script ini akan memperbarui:
 
+- `VERSION.txt` - File versi aplikasi
 - `js/config.js` - Versi aplikasi
 - `sw.js` - Nama cache
-- `README.md` - Badge info versi
 
 ---
 

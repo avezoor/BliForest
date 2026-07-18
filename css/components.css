@@ -104,6 +104,8 @@ tbody tr:last-child td { border-bottom: 0; }
 
 /* Clamp list & cards */
 .clamp-list { display: grid; gap: 14px; }
+#page-clamps.viewing-clamp > .panel:first-child { display: none; }
+#page-clamps.form-focused > .panel:first-child { display: none; }
 .clamp-card { border: 1px solid var(--line); border-radius: 17px; background: var(--panel-soft); overflow: hidden; }
 .clamp-summary {
   padding: 16px 17px;

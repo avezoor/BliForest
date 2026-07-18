@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 CONFIG_JS = ROOT / "js" / "config.js"
 SW_JS = ROOT / "sw.js"
-README_MD = ROOT / "README.md"
+VERSION_TXT = ROOT / "VERSION.txt"
 
 
 def now():
@@ -16,10 +16,13 @@ def now():
 
 
 def read_current_version():
-    content = CONFIG_JS.read_text(encoding="utf-8")
-    version_match = re.search(r'window\.APP_VERSION\s*=\s*["\']([^"\']+)["\']', content)
-    version = version_match.group(1) if version_match else "1.0.0"
-    date_match = re.search(r'window\.APP_UPDATED_AT\s*=\s*["\']([^"\']+)["\']', content)
+    if VERSION_TXT.exists():
+        version = VERSION_TXT.read_text(encoding="utf-8").strip()
+    else:
+        content = CONFIG_JS.read_text(encoding="utf-8")
+        version_match = re.search(r'window\.APP_VERSION\s*=\s*["\']([^"\']+)["\']', content)
+        version = version_match.group(1) if version_match else "1.0.0"
+    date_match = re.search(r'window\.APP_UPDATED_AT\s*=\s*["\']([^"\']+)["\']', CONFIG_JS.read_text(encoding="utf-8"))
     date_str = date_match.group(1) if date_match else ""
     return version, date_str
 
@@ -62,48 +65,8 @@ def update_service_worker(new_version, new_date):
     SW_JS.write_text(content, encoding="utf-8")
 
 
-def update_readme(new_version, new_date):
-    if not README_MD.exists():
-        return
-
-    content = README_MD.read_text(encoding="utf-8")
-
-    content = replace_required(
-        content,
-        r'(\*\*Versi\*\*\s*\|\s*`)[^`]+(`)',
-        rf'\g<1>{new_version}\g<2>',
-        "versi README",
-    )
-
-    formatted_date = format_date_badge(new_date)
-    content = replace_required(
-        content,
-        r'(\*\*Terakhir Diperbarui\*\*\s*\|\s*`)[^`]+(`)',
-        rf'\g<1>{formatted_date}\g<2>',
-        "tanggal README",
-    )
-
-    safe_version = re.sub(r"[^a-zA-Z0-9._-]+", "-", new_version).strip("-") or "app"
-    safe_date = new_date.replace("-", ".").replace(" ", "-")
-    cache_name = f"BliForest-{safe_version}-{safe_date}"
-    content = replace_required(
-        content,
-        r'(\*\*Cache\*\*\s*\|\s*`)[^`]+(`)',
-        rf'\g<1>{cache_name}\g<2>',
-        "cache README",
-    )
-
-    README_MD.write_text(content, encoding="utf-8")
-
-
-def format_date_badge(date_str):
-    try:
-        dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M")
-        bulan = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-                 "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
-        return f"{dt.day:02d} {bulan[dt.month]} {dt.year}, {dt.hour:02d}.{dt.minute:02d} WIB"
-    except ValueError:
-        return date_str
+def update_version_txt(new_version, new_date):
+    VERSION_TXT.write_text(new_version.strip() + "\n", encoding="utf-8")
 
 
 def format_date(date_str):
@@ -150,7 +113,7 @@ def main():
     try:
         update_config_js(new_version, new_date)
         update_service_worker(new_version, new_date)
-        update_readme(new_version, new_date)
+        update_version_txt(new_version, new_date)
         print("Update selesai!")
     except Exception as e:
         print(f"Gagal update: {e}")

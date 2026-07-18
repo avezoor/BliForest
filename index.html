@@ -36,10 +36,20 @@
 
   <!-- App loading overlay -->
   <div id="app-loader" class="app-loader" aria-live="polite">
-    <div class="loader-inner">
-      <img src="icons/pwa/icon-192.png" alt="" width="48" height="48">
+    <div class="loader-container">
+      <div class="loader-logo-wrap">
+        <div class="loader-ring"></div>
+        <div class="loader-ring-inner"></div>
+        <img src="icons/pwa/icon-192.png" alt="" class="loader-logo">
+      </div>
       <p class="loader-text">Memuat data TVL…</p>
       <p id="loader-sub" class="loader-sub">Mohon tunggu sebentar</p>
+      <div class="loader-dots">
+        <span class="loader-dot"></span>
+        <span class="loader-dot"></span>
+        <span class="loader-dot"></span>
+      </div>
+      <p class="loader-brand">BliForest</p>
     </div>
   </div>
 

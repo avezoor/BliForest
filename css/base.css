@@ -35,33 +35,83 @@ button { cursor: pointer; }
 
 .eyebrow, .section-label { margin: 0 0 6px; color: var(--green-700); font-size: 11px; font-weight: 800; letter-spacing: .14em; }
 
-/* ============================================================
-   App Loading Overlay
-   ============================================================ */
+/* App Loading Overlay */
 #app-loader {
   position: fixed; inset: 0; z-index: 9999;
-  background: var(--bg);
+  background: linear-gradient(135deg, #125e3d 0%, #1a7a50 50%, #125e3d 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
   display: flex; align-items: center; justify-content: center;
-  transition: opacity .4s ease;
+  transition: opacity .5s ease, visibility .5s ease;
 }
 #app-loader.hidden {
-  opacity: 0; pointer-events: none;
+  opacity: 0; visibility: hidden; pointer-events: none;
 }
-.loader-inner {
-  text-align: center;
+.loader-container {
+  text-align: center; padding: 2rem;
 }
-.loader-inner img {
-  animation: pulse 1.4s ease-in-out infinite;
-  border-radius: 14px;
-  display: block; margin: 0 auto 14px;
+.loader-logo-wrap {
+  position: relative; width: 96px; height: 96px; margin: 0 auto 1.5rem;
 }
+.loader-logo {
+  width: 96px; height: 96px; border-radius: 20px;
+  animation: logoFloat 2s ease-in-out infinite;
+  box-shadow: 0 8px 32px rgba(0,0,0,.3);
+}
+.loader-ring {
+  position: absolute; inset: -8px;
+  border: 3px solid rgba(255,255,255,.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+.loader-ring-inner {
+  position: absolute; inset: 0;
+  border: 2px solid rgba(255,255,255,.15);
+  border-bottom-color: rgba(255,255,255,.4);
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite reverse;
+}
+.loader-dots {
+  display: flex; justify-content: center; gap: 8px; margin-top: 1.5rem;
+}
+.loader-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(255,255,255,.9);
+  animation: dotBounce 1.4s ease-in-out infinite;
+}
+.loader-dot:nth-child(2) { animation-delay: .2s; }
+.loader-dot:nth-child(3) { animation-delay: .4s; }
 .loader-text {
-  margin: 0 0 6px; font-size: 17px; font-weight: 750; color: var(--ink);
+  margin: 0 0 6px; font-size: 18px; font-weight: 700;
+  color: #fff; letter-spacing: .5px;
 }
 .loader-sub {
-  margin: 0; font-size: 13px; color: var(--muted);
+  margin: 0; font-size: 13px; color: rgba(255,255,255,.75);
+  font-weight: 400;
 }
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.06); opacity: .85; }
+.loader-brand {
+  margin-top: 2rem; font-size: 11px; color: rgba(255,255,255,.5);
+  letter-spacing: 2px; text-transform: uppercase;
+}
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-6px) scale(1.02); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: scale(.6); opacity: .5; }
+  40% { transform: scale(1); opacity: 1; }
+}
+@media (max-width: 480px) {
+  .loader-logo { width: 80px; height: 80px; border-radius: 16px; }
+  .loader-ring { inset: -6px; }
+  .loader-logo-wrap { width: 80px; height: 80px; margin-bottom: 1.2rem; }
+  .loader-text { font-size: 16px; }
 }

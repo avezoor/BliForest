@@ -4,8 +4,8 @@
 // App Configuration
 // ============================================================
 
-window.APP_VERSION = "1.4.1";
-window.APP_UPDATED_AT = "2026-07-18 21:28";
+window.APP_VERSION = "1.4.4";
+window.APP_UPDATED_AT = "2026-07-18 22:31";
 window.APP_DATA_VERSION = 6;
 
 // Data utama pengguna. Semua klem, pohon, jenis, dan TVL ternormalisasi

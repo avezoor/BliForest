@@ -12,7 +12,7 @@
     "height": "H = (40000 * π * a * K^(b-2)) / fc"
   },
   "coefficients": {
-    "a": 0.000007827,
+    "a": 0.0000068485716,
     "b": 2.427,
     "factor": 0.8,
     "factor_correction": 0.7
