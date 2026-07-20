@@ -1,9 +1,5 @@
 "use strict";
 
-// ============================================================
-// PWA Module — instalasi, konektivitas, dan sinkronisasi otomatis
-// ============================================================
-
 (function(global) {
   var App = global.App || {};
   var deferredInstallPrompt = null;
@@ -12,18 +8,26 @@
 
   function updateConnectivity(syncing) {
     var dot = document.getElementById("online-dot");
+    var topbarDot = document.getElementById("topbar-online-dot");
     var label = document.getElementById("online-label");
     var online = navigator.onLine;
 
-    if (dot) dot.classList.toggle("online", online);
+    if (dot) {
+      dot.classList.toggle("online", online);
+      dot.classList.toggle("offline", !online);
+    }
+    if (topbarDot) {
+      topbarDot.classList.toggle("online", online);
+      topbarDot.classList.toggle("offline", !online);
+    }
     if (!label) return;
 
     if (!online) {
-      label.textContent = "Mode Offline • data lokal";
+      label.textContent = "Offline";
     } else if (syncing || syncInProgress) {
-      label.textContent = "Online • menyinkronkan";
+      label.textContent = "Sinkron...";
     } else {
-      label.textContent = "Mode Online • data tersimpan";
+      label.textContent = "Online";
     }
   }
 
@@ -68,15 +72,6 @@
 
   function registerServiceWorker() {
     if (!("serviceWorker" in navigator) || !/^https?:$/.test(location.protocol)) return;
-
-    var hadController = !!navigator.serviceWorker.controller;
-    var reloading = false;
-    navigator.serviceWorker.addEventListener("controllerchange", function() {
-      // Service worker lama benar-benar diganti oleh versi aplikasi baru.
-      if (!hadController || reloading) return;
-      reloading = true;
-      global.location.reload();
-    });
 
     navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
       .then(function(registration) {

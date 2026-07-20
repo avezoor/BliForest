@@ -17,10 +17,8 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/pages.css">
   <link rel="stylesheet" href="css/responsive.css">
-  <!-- Data bundles (provide global variables) -->
   <script src="data/bkph-bundle.js" defer></script>
 
-  <!-- Core scripts (order matters): config → utils → modules → app -->
   <script src="js/config.js" defer></script>
   <script src="js/utils.js" defer></script>
   <script src="js/modules/storage.js" defer></script>
@@ -34,7 +32,6 @@
 <body>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <!-- App loading overlay -->
   <div id="app-loader" class="app-loader" aria-live="polite">
     <div class="loader-particles">
       <span class="particle"></span>
@@ -82,11 +79,11 @@
       </div>
 
       <nav class="side-nav" aria-label="Menu utama">
-        <button class="nav-item active" type="button" data-page="trees">
-          <span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 20A7 7 0 019.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></span><span>Tambah Pohon</span>
+        <button class="nav-item active" type="button" data-page="clamps">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span>Daftar Klem</span>
         </button>
-        <button class="nav-item" type="button" data-page="clamps">
-          <span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span>Tambah Klem Pohon</span>
+        <button class="nav-item" type="button" data-page="trees">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 20A7 7 0 019.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></span><span>Tambah Pohon</span>
         </button>
         <button class="nav-item" type="button" data-page="recap">
           <span class="nav-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 5-5"/></svg></span><span>Rekapan Hasil</span>
@@ -126,12 +123,15 @@
 
     <main class="main-area">
       <header class="topbar">
+        <div class="online-indicator" id="online-indicator" title="Status koneksi">
+          <span id="topbar-online-dot" class="status-dot"></span>
+        </div>
         <button id="sidebar-open" class="icon-btn mobile-only" type="button" aria-label="Buka menu">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
         </button>
         <div>
-          <p id="page-kicker" class="eyebrow">MASTER DATA</p>
-          <h2 id="page-title">Tambah Pohon</h2>
+          <p id="page-kicker" class="eyebrow">DATA LAPANGAN</p>
+          <h2 id="page-title">Daftar Klem</h2>
         </div>
         <div class="user-chip">
         </div>
@@ -139,37 +139,34 @@
 
       <div class="content-wrap">
 
-        <section id="page-trees" class="page active-page">
-          <div class="grid two-col">
-            <article class="panel">
-              <div class="panel-heading">
-                <div><p class="section-label">JENIS KAYU</p><h3>Tambahkan jenis pohon</h3></div>
+        <section id="page-trees" class="page">
+          <article class="panel">
+            <div class="panel-heading">
+              <div><p class="section-label">TAMBAHKAN MANUAL</p></div>
+            </div>
+            <form id="species-custom-form" class="form-grid" novalidate>
+              <label class="field full">
+                <span>Nama jenis pohon</span>
+                <input id="custom-species-name" type="text" placeholder="Contoh: Jati" required maxlength="80">
+              </label>
+              <label class="field full">
+                <span>Sumber TVL</span>
+                <select id="custom-tvl-source">
+                  <option value="tvl">Pakai TVL</option>
+                  <option value="custom">Non-TVL (Manual)</option>
+                </select>
+              </label>
+              <div id="tvl-mode-fields" class="tvl-fields">
+                <label class="field">
+                  <span>Pilih TVL</span>
+                  <select id="custom-tvl-select"></select>
+                </label>
+                <label class="field">
+                  <span>Faktor (f)</span>
+                  <input id="custom-factor-tvl" type="number" step="0.01" value="1" placeholder="1">
+                </label>
               </div>
-              <form id="tree-form" class="form-grid">
-                <label class="field full">
-                  <span>Nama pohon</span>
-                  <input id="tree-name" type="text" placeholder="Contoh: Jati" required maxlength="80">
-                </label>
-                <label class="field full">
-                  <span>Pilih sumber TVL</span>
-                  <select id="tvl-select" required></select>
-                </label>
-                <button class="btn btn-primary full" type="submit">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                  Tambahkan
-                </button>
-              </form>
-            </article>
-
-            <article class="panel">
-              <div class="panel-heading">
-                <div><p class="section-label">TAMBAHKAN MANUAL</p></div>
-              </div>
-              <form id="species-custom-form" class="form-grid two-col-form">
-                <label class="field full">
-                  <span>Nama jenis kayu</span>
-                  <input id="custom-species-name" type="text" placeholder="Contoh: Jati" required maxlength="80">
-                </label>
+              <div id="nontvl-mode-fields" class="nontvl-fields" style="display:none;">
                 <label class="field">
                   <span>Koefisien a</span>
                   <input id="custom-coef-a" type="number" step="0.0000000000001" placeholder="0.000001" required>
@@ -179,47 +176,37 @@
                   <input id="custom-coef-b" type="number" step="0.001" placeholder="1" required>
                 </label>
                 <label class="field">
-                  <span>Factor (f)</span>
+                  <span>Faktor (f)</span>
                   <input id="custom-factor" type="number" step="0.01" value="1" placeholder="1">
                 </label>
-                <label class="field">
-                  <span>Factor Koreksi (fc)</span>
-                  <input id="custom-factor-correction" type="number" step="0.01" value="0.7" placeholder="0.7">
-                </label>
-                <button class="btn btn-primary full" type="submit">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                  Tambah Jenis Kayu
-                </button>
-              </form>
-            </article>
-
-          </div>
+              </div>
+              <button class="btn btn-primary full" type="submit">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                Tambah Jenis Pohon
+              </button>
+            </form>
+          </article>
 
           <article class="panel section-gap">
             <div class="panel-heading">
-              <div><p class="section-label">MASTER POHON</p><h3>Jenis kayu tersimpan</h3></div>
+              <div><p class="section-label">MASTER POHON</p></div>
               <span id="tree-count" class="badge">0 jenis</span>
             </div>
             <div id="tree-list" class="card-list"></div>
           </article>
         </section>
 
-        <section id="page-clamps" class="page">
+        <section id="page-clamps" class="page active-page">
           <article class="panel">
             <div class="panel-heading">
-              <div><p class="section-label">DAFTAR KLEM</p><h3>Buat daftar klem baru</h3></div>
+              <div><p class="section-label">DAFTAR KLEM</p></div>
             </div>
-            <form id="clamp-form" class="form-grid three-col-form">
+            <form id="clamp-form" class="form-grid">
               <label class="field"><span>BKPH</span><select id="clamp-bkph" required></select></label>
               <label class="field"><span>RPH</span><select id="clamp-rph" required></select></label>
-              <label class="field"><span>Jenis kayu utama</span><select id="clamp-species" required></select></label>
-              <label class="field"><span>Blok</span><input id="clamp-block" type="text" required maxlength="120" placeholder="Nama/nomor blok"></label>
-              <label class="field"><span>Luas Blok (ha)</span><input id="clamp-block-area" type="number" min="0" step="0.01" required placeholder="0,00"></label>
-              <label class="field"><span>Petak</span><input id="clamp-compartment" type="text" required maxlength="120" placeholder="Nomor petak"></label>
-              <label class="field"><span>Luas Baku (ha)</span><input id="clamp-standard-area" type="number" min="0" step="0.01" required placeholder="0,00"></label>
-              <label class="field"><span>Luas Tebangan (ha)</span><input id="clamp-cut-area" type="number" min="0" step="0.01" required placeholder="0,00"></label>
-              <label class="field"><span>Kelas Hutan</span><input id="clamp-forest-class" type="text" required maxlength="120" placeholder="Contoh: KU III"></label>
-              <label class="field"><span>Tahun Tanam</span><select id="clamp-planting-year"><option value="">Pilih tahun</option><script>const y=new Date().getFullYear();for(let i=y;i>=1950;i--)document.write('<option value="'+i+'">'+i+'</option>');</script></select></label>
+              <label class="field full"><span>Jenis pohon utama</span><select id="clamp-species" required></select></label>
+              <label class="field"><span>Nama blok</span><input id="clamp-block" type="text" required maxlength="120" placeholder="Nama Blok"></label>
+              <label class="field"><span>Anak petak</span><input id="clamp-compartment" type="text" required maxlength="120" placeholder="Anak Petak"></label>
               <button class="btn btn-primary full" type="submit">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
                 Tambahkan Daftar
@@ -229,10 +216,10 @@
 
           <article class="panel section-gap">
             <div class="panel-heading">
-              <div><p class="section-label">DATA LAPANGAN</p><h3>Daftar klem pohon</h3></div>
+              <div><p class="section-label">DATA LAPANGAN</p></div>
               <div class="clamp-panel-tools">
                 <form id="clamp-search-form" class="clamp-search" role="search">
-                  <input id="clamp-search" type="search" placeholder="Cari daftar klem..." maxlength="120" aria-label="Cari daftar klem">
+                  <input id="clamp-search" type="search" placeholder="Cari Daftar..." maxlength="120" aria-label="Cari daftar klem">
                   <button id="clamp-search-btn" class="btn btn-secondary compact" type="submit">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
                     Cari
@@ -252,7 +239,7 @@
           <div id="summary-cards" class="summary-grid"></div>
           <article class="panel section-gap">
             <div class="panel-heading">
-              <div><p class="section-label">REKAP PER DAFTAR</p><h3>Ringkasan hasil klem</h3></div>
+              <div><p class="section-label">REKAP PER DAFTAR</p><</div>
               <button id="export-btn" class="btn btn-secondary compact" type="button">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4m4-5l5 5 5-5m-5 5V3"/></svg>
                 Ekspor Excel
@@ -261,7 +248,7 @@
             <div class="table-wrap">
               <table>
                 <thead>
-                  <tr><th>Daftar Klem</th><th>BKPH / RPH</th><th>Jenis Utama</th><th>Tahun Tanam</th><th>Rata Keliling</th><th>Rata Diameter</th><th>Rata Tinggi</th><th>Jumlah</th><th>Total Volume</th></tr>
+                  <tr><th>Daftar Klem</th><th>BKPH / RPH</th><th>Jenis Utama</th><th>Rata Keliling</th><th>Rata Diameter</th><th>Jumlah</th><th>Total Volume</th></tr>
                 </thead>
                 <tbody id="recap-body"></tbody>
               </table>
@@ -272,12 +259,12 @@
         <section id="page-master" class="page">
           <article class="panel">
             <div class="panel-heading">
-              <div><p class="section-label">PENGELOLAAN DATA</p><h3>Master Data</h3></div>
+              <div><p class="section-label">PENGELOLAAN DATA</p></div>
             </div>
 
             <div class="master-stats">
               <div class="master-stat">
-                <span class="stat-label">Jenis Kayu</span>
+                <span class="stat-label">Jenis Pohon</span>
                 <strong id="master-species-count">0</strong>
               </div>
               <div class="master-stat">

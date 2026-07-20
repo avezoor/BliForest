@@ -1,10 +1,7 @@
 "use strict";
 
-// Ubah versi cache setiap kali shell aplikasi berubah agar perangkat yang
-// sedang online mengambil HTML/CSS/JS terbaru, sedangkan mode offline tetap
-// memakai salinan terakhir yang berhasil disimpan.
 const CACHE_PREFIX = "BliForest-";
-const CACHE_NAME = CACHE_PREFIX + "BliForest-1.4.6-2026.07.20-09:03";
+const CACHE_NAME = CACHE_PREFIX + "BliForest-1.4.7-2026.07.20-22:31";
 
 const CORE_FILES = [
   "./",
@@ -110,7 +107,6 @@ async function cacheFirstWithRefresh(request) {
     .catch(() => null);
 
   if (cached) {
-    // Perbarui di belakang layar tanpa menahan tampilan gambar/icon.
     update.catch(() => null);
     return cached;
   }
@@ -130,7 +126,6 @@ self.addEventListener("fetch", event => {
   const isSameOrigin = url.origin === self.location.origin;
   const isGithubRaw = url.hostname === "raw.githubusercontent.com";
 
-  // Dokumen (docs/) tidak di-cache - butuh internet
   if (url.pathname.startsWith("/docs/") || url.pathname.startsWith("docs/")) {
     event.respondWith(fetch(request));
     return;
@@ -146,8 +141,6 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // Semua shell aplikasi dan JSON lokal memakai network-first ketika online.
-  // Jika jaringan gagal, salinan Cache Storage digunakan agar PWA tetap penuh.
   if (isSameOrigin || isGithubRaw) {
     event.respondWith(networkFirst(request));
   }

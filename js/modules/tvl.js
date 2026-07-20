@@ -1,11 +1,5 @@
 "use strict";
 
-// ============================================================
-// TVL Data Module (Berkhout Formula + offline-first sync)
-// ============================================================
-// Volume = a × K^b × factor
-// ============================================================
-
 (function(global) {
   var App = global.App || {};
   var TVL_INDEX_PATH = global.TVL_INDEX_PATH;
@@ -15,12 +9,12 @@
   var MANIFEST_STORAGE_KEY = global.TVL_MANIFEST_STORAGE_KEY || "bliforest-tvl-manifest";
   var RAW_STORAGE_PREFIX = global.TVL_RAW_STORAGE_PREFIX || "bliforest-tvl-raw:";
 
-  var PI = Math.PI;
+  var PI = 3.14159265358979323846264338327950288419716939937510;
   var refreshInFlight = null;
 
-  // ------------------------------------------------------------
-  // Perhitungan
-  // ------------------------------------------------------------
+  
+  
+  
 
   function calculateVolume(tvl, circumference) {
     if (!tvl || !tvl.coefficients || !Number.isFinite(circumference)) return null;
@@ -56,7 +50,7 @@
     };
   }
 
-  // Normalisasi dan validasi
+  
 
   function normalizeFilename(file) {
     var filename = String(file || "").split("?")[0].split("/").pop();
@@ -103,7 +97,7 @@
     var current = readJsonStorage(currentKey);
     if (current) return current;
 
-    // Legacy key migration
+    
     var legacyKey = "tvl_raw_" + normalizeFilename(path).replace(/\.json$/i, "");
     var legacy = readJsonStorage(legacyKey);
     if (legacy) writeJsonStorage(currentKey, legacy);
@@ -151,8 +145,8 @@
       });
   }
 
-  // LocalStorage adalah sumber offline utama. Cache Storage dan berkas paket
-  // hanya dipakai sebagai fallback pemasangan pertama atau pemulihan cache.
+  
+  
   function loadLocalTvlRaw(path) {
     var stored = getLocalStorageTvl(path);
     if (stored) return Promise.resolve(stored);
@@ -167,7 +161,7 @@
     });
   }
 
-  // Normalisasi dan validasi
+  
 
   function tvlSignature(tvl) {
     if (!tvl) return "";
@@ -295,7 +289,7 @@
     };
   }
 
-    // Memuat manifest dan TVL
+    
 
   function loadLocalManifest() {
     var stored = getLocalManifest();
@@ -358,7 +352,7 @@
       try {
         var tvl = validateTvl(normalizeTvl(raw, "tvl-bundle-" + (index + 1) + ".json"));
         loaded[tvl.id] = tvl;
-      } catch (e) { /* lewati data bundle yang rusak */ }
+      } catch (e) { }
     });
     return loaded;
   }
@@ -375,7 +369,7 @@
       return String(incoming.version).localeCompare(String(current.version), undefined, { numeric: true }) > 0;
     }
 
-    // Jika versi/tanggal tidak tersedia, pertahankan data lokal.
+    
     return false;
   }
 
@@ -416,7 +410,7 @@
     return changedIds;
   }
 
-  // Boot lokal: tidak menunggu GitHub. State dari localStorage adalah sumber utama.
+  
   function loadBuiltinTvls() {
     var state = App.storage.state;
     state.tvls = state.tvls && typeof state.tvls === "object" ? state.tvls : {};
@@ -446,12 +440,21 @@
     });
   }
 
-    // Lookup dan hitung ulang
+    
 
   function lookupVolume(speciesId, circumference) {
     if (!speciesId || !Number.isFinite(circumference) || circumference < 0) return null;
+    var state = App.storage.state;
     var species = App.storage.getSpecies(speciesId);
-    var tvl = species ? App.storage.state.tvls[species.tvlId] : null;
+    var tvl = null;
+
+    if (species && species.tvlId) {
+      tvl = state.tvls[species.tvlId];
+    } else if (state.tvls && state.tvls[speciesId]) {
+      
+      tvl = state.tvls[speciesId];
+    }
+
     if (!tvl) return null;
 
     if (tvl.model === "berkhout") {
@@ -521,7 +524,7 @@
     return result;
   }
 
-    // Sinkronisasi online
+    
 
   function refreshTvls(options) {
     options = options || {};
@@ -592,7 +595,7 @@
     return refreshInFlight;
   }
 
-    // Impor manual
+    
 
   function importTvlFromFile(file) {
     return file.text().then(function(text) {

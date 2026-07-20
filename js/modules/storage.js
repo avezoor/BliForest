@@ -1,15 +1,11 @@
 "use strict";
 
-// ============================================================
-// Storage / State Persistence Module
-// ============================================================
-
 (function(global) {
   var App = global.App || {};
   var STORAGE_KEY = global.STORAGE_KEY;
   var APP_DATA_VERSION = global.APP_DATA_VERSION;
 
-  // Module-level state
+  
   var state = null;
   var expandedClamps = new Set();
   var clampPage = 1;
@@ -96,16 +92,16 @@
   }
 
   function createClampCode() {
-    var date = new Date();
-    var ymd = date.getFullYear() + pad(date.getMonth() + 1) + pad(date.getDate());
-    var prefix = "KLM-" + ymd + "-";
-    var seq = state.clamps
-      .map(function(c) { return c.code || ""; })
-      .filter(function(c) { return c.indexOf(prefix) === 0; })
-      .map(function(c) { return Number(c.slice(prefix.length)); })
-      .filter(Number.isFinite)
-      .reduce(function(m, v) { return Math.max(m, v); }, 0) + 1;
-    return prefix + String(seq).padStart(3, "0");
+    var prefix = "KLEM-";
+    var maxSeq = 0;
+    (state.clamps || []).forEach(function(c) {
+      var match = c.code && c.code.match(/^KLEM-(\d+)$/);
+      if (match) {
+        var num = parseInt(match[1], 10);
+        if (num > maxSeq) maxSeq = num;
+      }
+    });
+    return prefix + String(maxSeq + 1).padStart(4, "0");
   }
 
   function getTreePage(clampId) {
@@ -141,8 +137,10 @@
 
   function matchesClampSearch(clamp, query) {
     var species = getSpecies(clamp.speciesId);
+    var tvl = species ? state.tvls && state.tvls[species.tvlId] : state.tvls && state.tvls[clamp.speciesId];
+    var speciesName = species ? species.name : (tvl ? (tvl.species || tvl.name || "") : "");
     var haystack = [clamp.code, clamp.bkph, clamp.rph, clamp.block, clamp.compartment,
-      clamp.forestClass, clamp.plantingYear, species && species.name,
+      speciesName,
       (clamp.trees || []).map(function(t) { return t.treeNumber; }).join(" ")
     ].filter(Boolean).join(" ").toLowerCase();
     return haystack.indexOf(query) !== -1;
@@ -165,6 +163,7 @@
     treeSearchQueries = {};
     clampPage = 1;
     saveState();
+    return true;
   }
 
   function pad(n) { return String(n).padStart(2, "0"); }

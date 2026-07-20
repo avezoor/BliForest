@@ -1,15 +1,10 @@
 "use strict";
 
-// ============================================================
-// Event Handlers Module
-// ============================================================
-
 (function(global) {
   var App = global.App || {};
   var U = global.Utils || {};
   var TREES_PER_PAGE = global.TREES_PER_PAGE || 10;
 
-  // ---- Navigation ----
   function bindNav() {
     document.querySelectorAll(".nav-item").forEach(function(btn) {
       btn.addEventListener("click", function() {
@@ -18,7 +13,6 @@
     });
   }
 
-  // ---- Sidebar ----
   function bindSidebar() {
     var el = App.components.el;
     el("sidebar-open") && el("sidebar-open").addEventListener("click", App.components.openSidebar);
@@ -26,114 +20,129 @@
     el("sidebar-overlay") && el("sidebar-overlay").addEventListener("click", App.components.closeSidebar);
   }
 
-  // ---- Trees page ----
   function bindTree() {
     var el = App.components.el;
-    el("tree-form") && el("tree-form").addEventListener("submit", handleTreeSubmit);
-    el("tree-list") && el("tree-list").addEventListener("click", handleTreeListClick);
-    // Custom species form
     el("species-custom-form") && el("species-custom-form").addEventListener("submit", handleCustomSpeciesSubmit);
+    el("tree-list") && el("tree-list").addEventListener("click", handleTreeListClick);
+    el("custom-tvl-source") && el("custom-tvl-source").addEventListener("change", handleTvlSourceToggle);
+    handleTvlSourceToggle();
   }
 
-  // ---- Handle custom species submit ----
+  function handleTvlSourceToggle() {
+    var el = App.components.el;
+    var source = el("custom-tvl-source") && el("custom-tvl-source").value;
+    var tvlFields = el("tvl-mode-fields");
+    var nontvlFields = el("nontvl-mode-fields");
+    if (tvlFields) tvlFields.style.display = source === "tvl" ? "" : "none";
+    if (nontvlFields) nontvlFields.style.display = source === "custom" ? "" : "none";
+  }
+
   function handleCustomSpeciesSubmit(e) {
     e.preventDefault();
     var el = App.components.el;
     var name = (el("custom-species-name") && el("custom-species-name").value || "").trim();
-    var a = Number(el("custom-coef-a") && el("custom-coef-a").value);
-    var b = Number(el("custom-coef-b") && el("custom-coef-b").value);
-    var factor = Number(el("custom-factor") && el("custom-factor").value) || 1;
-    var fc = Number(el("custom-factor-correction") && el("custom-factor-correction").value) || 0.7;
+    var source = el("custom-tvl-source") && el("custom-tvl-source").value;
     var state = App.storage.state;
 
     if (!name) {
-      App.components.showToast("Nama jenis kayu harus diisi.");
-      return;
-    }
-    if (!a || !b || a <= 0 || b <= 0) {
-      App.components.showToast("Koefisien a dan b harus diisi dengan nilai yang valid.");
+      App.components.showToast("Nama jenis pohon harus diisi.");
       return;
     }
     if (state.species.some(function(s) { return s.name.toLowerCase() === name.toLowerCase(); })) {
-      App.components.showToast("Nama jenis kayu tersebut sudah tersimpan.");
+      App.components.showToast("Nama jenis pohon tersebut sudah tersimpan.");
       return;
     }
 
-    // Create custom TVL for this species
-    var tvlId = "tvl_custom_" + U.createId("custom");
-    var customTvl = {
-      id: tvlId,
-      name: "TVL " + name,
-      species: name,
-      normalizedSpecies: name,
-      version: "custom",
-      updatedAt: new Date().toISOString(),
-      model: "berkhout",
-      formula: {
-        volume: "V = a * K^b * f",
-        diameter: "D = K / π",
-        height: "H = (40000 * π * a * K^(b-2)) / fc"
-      },
-      coefficients: {
-        a: a,
-        b: b,
-        factor: factor,
-        factor_correction: fc
-      },
-      K: { unit: "cm", description: "Keliling" },
-      diameter: { unit: "cm" },
-      height: { unit: "m" },
-      volume: { unit: "m3" }
-    };
+    var speciesId = U.createId("species");
+    var tvlId = null;
 
-    // Add species with reference to custom TVL
-    state.species.push({
-      id: U.createId("species"),
-      name: name,
-      tvlId: tvlId,
-      createdAt: new Date().toISOString()
-    });
+    if (source === "tvl") {
+      var selectedTvlId = el("custom-tvl-select") && el("custom-tvl-select").value;
+      var factor = Number(el("custom-factor-tvl") && el("custom-factor-tvl").value) || 1;
 
-    // Save custom TVL
-    state.tvls[tvlId] = customTvl;
+      if (!selectedTvlId || !state.tvls[selectedTvlId]) {
+        App.components.showToast("Pilih TVL yang valid.");
+        return;
+      }
+
+      if (factor === 1) {
+        tvlId = selectedTvlId;
+      } else {
+        tvlId = "tvl_custom_" + U.createId("custom");
+        var baseTvl = state.tvls[selectedTvlId];
+        var customTvl = JSON.parse(JSON.stringify(baseTvl));
+        customTvl.id = tvlId;
+        customTvl.name = "TVL " + name;
+        customTvl.species = name;
+        customTvl.normalizedSpecies = name;
+        customTvl.version = "custom";
+        customTvl.updatedAt = new Date().toISOString();
+        customTvl.coefficients = JSON.parse(JSON.stringify(baseTvl.coefficients || {}));
+        customTvl.coefficients.factor = factor;
+        delete customTvl.coefficients.factor_correction;
+        state.tvls[tvlId] = customTvl;
+      }
+
+      state.species.push({
+        id: speciesId,
+        name: name,
+        tvlId: tvlId,
+        createdAt: new Date().toISOString()
+      });
+    } else {
+      var a = Number(el("custom-coef-a") && el("custom-coef-a").value);
+      var b = Number(el("custom-coef-b") && el("custom-coef-b").value);
+      var factor = Number(el("custom-factor") && el("custom-factor").value) || 1;
+
+      if (!a || !b || a <= 0 || b <= 0) {
+        App.components.showToast("Koefisien a dan b harus diisi dengan nilai yang valid.");
+        return;
+      }
+
+      tvlId = "tvl_custom_" + U.createId("custom");
+      var customTvl = {
+        id: tvlId,
+        name: "TVL " + name,
+        species: name,
+        normalizedSpecies: name,
+        version: "custom",
+        updatedAt: new Date().toISOString(),
+        model: "berkhout",
+        formula: {
+          volume: "V = a * K^b * f",
+          diameter: "D = K / π",
+          height: "H = (40000 * π * a * K^(b-2)) / fc"
+        },
+        coefficients: {
+          a: a,
+          b: b,
+          factor: factor
+        },
+        K: { unit: "cm", description: "Keliling" },
+        diameter: { unit: "cm" },
+        height: { unit: "m" },
+        volume: { unit: "m3" }
+      };
+
+      state.tvls[tvlId] = customTvl;
+      state.species.push({
+        id: speciesId,
+        name: name,
+        tvlId: tvlId,
+        createdAt: new Date().toISOString()
+      });
+    }
 
     App.storage.saveState();
     e.target.reset();
+    if (el("custom-tvl-source")) el("custom-tvl-source").value = "tvl";
+    handleTvlSourceToggle();
     App.components.renderTvlSelect(tvlId);
+    App.components.renderCustomTvlSelect();
     App.components.renderSpecies();
     App.components.renderClampSpeciesSelect();
     App.components.renderClamps();
-    App.components.showToast('Jenis kayu "' + name + '" ditambahkan dengan TVL custom.');
-  }
-
-  function handleTreeSubmit(e) {
-    e.preventDefault();
-    var el = App.components.el;
-    var name = (el("tree-name") && el("tree-name").value || "").trim();
-    var tvlId = el("tvl-select") && el("tvl-select").value;
-    var state = App.storage.state;
-
-    if (!name || !state.tvls[tvlId]) {
-      App.components.showToast("Isi nama pohon dan pilih TVL yang valid.");
-      return;
-    }
-    if (state.species.some(function(s) { return s.name.toLowerCase() === name.toLowerCase(); })) {
-      App.components.showToast("Nama jenis kayu tersebut sudah tersimpan.");
-      return;
-    }
-    state.species.push({
-      id: U.createId("species"),
-      name: name,
-      tvlId: tvlId,
-      createdAt: new Date().toISOString()
-    });
-    App.storage.saveState();
-    e.target.reset();
-    App.components.renderTvlSelect(tvlId);
-    App.components.renderSpecies();
-    App.components.renderClampSpeciesSelect();
-    App.components.renderClamps();
-    App.components.showToast('Jenis kayu "' + name + '" ditambahkan.');
+    App.components.showToast('Jenis pohon "' + name + '" ditambahkan.');
   }
 
   function handleTreeListClick(e) {
@@ -145,32 +154,34 @@
       return c.speciesId === id || (c.trees && c.trees.some(function(t) { return t.speciesId === id; }));
     });
     if (btn.disabled || used) {
-      App.components.showToast("Jenis kayu tidak dapat dihapus karena digunakan dalam daftar klem.");
+      App.components.showToast("Jenis pohon tidak dapat dihapus karena digunakan dalam daftar klem.");
       return;
     }
     var item = state.species.find(function(s) { return s.id === id; });
     if (!item) return;
-    if (!confirm('Hapus jenis kayu "' + item.name + '"?')) return;
+    if (!confirm('Hapus jenis pohon "' + item.name + '"?')) return;
+
     state.species = state.species.filter(function(s) { return s.id !== id; });
+    if (item.tvlId && item.tvlId.startsWith("tvl_custom_")) {
+      delete state.tvls[item.tvlId];
+    }
+
     App.storage.saveState();
     App.components.renderSpecies();
     App.components.renderClampSpeciesSelect();
     App.components.renderClamps();
+    App.components.renderTvlSelect();
+    App.components.renderCustomTvlSelect();
     App.components.showToast("Jenis kayu dihapus.");
   }
 
-  // ---- Clamp form ----
   function bindClampForm() {
     var el = App.components.el;
-
-    // Render BKPH select
     var bkphKeys = Object.keys(App.storage.bkphData || {}).sort(function(a, b) { return a.localeCompare(b, "id"); });
     if (el("clamp-bkph")) {
       el("clamp-bkph").innerHTML = '<option value="">Pilih BKPH</option>' +
         bkphKeys.map(function(k) { return '<option value="' + U.escapeHtml(k) + '">' + U.escapeHtml(k) + '</option>'; }).join("");
     }
-
-    // BKPH change handler - populate RPH dropdown
     if (el("clamp-bkph")) {
       el("clamp-bkph").onchange = function() {
         var bkphVal = el("clamp-bkph").value;
@@ -212,31 +223,30 @@
     e.preventDefault();
     var el = App.components.el;
     var state = App.storage.state;
-    if (!state.species.length) {
-      App.components.showToast("Tambahkan jenis kayu terlebih dahulu.");
-      App.components.switchPage("trees");
-      return;
-    }
-    var clamp = {
-      id: U.createId("clamp"),
-      code: App.storage.createClampCode(),
-      bkph: el("clamp-bkph") && el("clamp-bkph").value || "",
-      rph: el("clamp-rph") && el("clamp-rph").value || "",
-      speciesId: el("clamp-species") && el("clamp-species").value || "",
-      block: (el("clamp-block") && el("clamp-block").value || "").trim(),
-      blockArea: Number(el("clamp-block-area") && el("clamp-block-area").value) || 0,
-      compartment: (el("clamp-compartment") && el("clamp-compartment").value || "").trim(),
-      standardArea: Number(el("clamp-standard-area") && el("clamp-standard-area").value) || 0,
-      cutArea: Number(el("clamp-cut-area") && el("clamp-cut-area").value) || 0,
-      forestClass: (el("clamp-forest-class") && el("clamp-forest-class").value || "").trim(),
-      plantingYear: Number(el("clamp-planting-year") && el("clamp-planting-year").value) || null,
-      trees: [],
-      createdAt: new Date().toISOString()
-    };
-    if (!clamp.bkph || !clamp.rph || !clamp.speciesId || !clamp.block || !clamp.compartment || !clamp.forestClass) {
+    var bkph = (el("clamp-bkph") && el("clamp-bkph").value || "").trim();
+    var rph = (el("clamp-rph") && el("clamp-rph").value || "").trim();
+    var speciesId = (el("clamp-species") && el("clamp-species").value || "").trim();
+    var block = (el("clamp-block") && el("clamp-block").value || "").trim();
+    var compartment = (el("clamp-compartment") && el("clamp-compartment").value || "").trim();
+
+    if (!bkph || !rph || !speciesId || !block || !compartment) {
       App.components.showToast("Lengkapi seluruh data daftar klem.");
       return;
     }
+
+    var clampCode = App.storage.createClampCode();
+
+    var clamp = {
+      id: U.createId("clamp"),
+      code: clampCode,
+      bkph: bkph,
+      rph: rph,
+      speciesId: speciesId,
+      block: block,
+      compartment: compartment,
+      trees: [],
+      createdAt: new Date().toISOString()
+    };
     state.clamps.unshift(clamp);
     App.storage.expandedClamps.add(clamp.id);
     App.storage.saveState();
@@ -245,7 +255,107 @@
     App.components.renderClampSpeciesSelect();
     App.components.renderClamps();
     App.components.renderRecap();
-    App.components.showToast(clamp.code + " berhasil dibuat.");
+    App.components.showToast(clampCode + " berhasil dibuat.");
+  }
+
+  function showEditClampModal(clamp) {
+    var el = App.components.el;
+    var modal = document.getElementById("clamp-modal");
+    var modalTitle = document.getElementById("modal-title");
+    var modalBody = document.getElementById("modal-body");
+    if (!modal || !modalTitle || !modalBody) return;
+
+    var bkphKeys = Object.keys(App.storage.bkphData || {}).sort(function(a, b) { return a.localeCompare(b, "id"); });
+    var bkphOptions = bkphKeys.map(function(k) {
+      return '<option value="' + U.escapeHtml(k) + '"' + (clamp.bkph === k ? ' selected' : '') + '>' + U.escapeHtml(k) + '</option>';
+    }).join("");
+
+    var rphOpts = (App.storage.bkphData[clamp.bkph] || []).slice().sort(function(a, b) { return a.localeCompare(b, "id"); });
+    var rphOptions = rphOpts.map(function(r) {
+      return '<option value="' + U.escapeHtml(r) + '"' + (clamp.rph === r ? ' selected' : '') + '>' + U.escapeHtml(r) + '</option>';
+    }).join("");
+
+    var speciesOpts = (function() {
+      var state = App.storage.state;
+      var options = [];
+      var existingSpeciesIds = (state.species || []).map(function(s) { return s.tvlId; });
+
+      (state.species || []).slice().sort(function(a, b) { return a.name.localeCompare(b.name, "id"); }).forEach(function(item) {
+        options.push({ value: item.id, label: item.name, selected: item.id === clamp.speciesId });
+      });
+
+      Object.values(state.tvls || {}).forEach(function(tvl) {
+        if (existingSpeciesIds.indexOf(tvl.id) !== -1) return;
+        options.push({ value: tvl.id, label: tvl.species || tvl.name || tvl.id, selected: tvl.id === clamp.speciesId });
+      });
+
+      options.sort(function(a, b) { return a.label.localeCompare(b.label, "id"); });
+      return options.map(function(o) {
+        return '<option value="' + U.escapeHtml(o.value) + '"' + (o.selected ? ' selected' : '') + '>' + U.escapeHtml(o.label) + '</option>';
+      }).join("");
+    })();
+
+    modalTitle.textContent = "Edit Daftar Klem";
+    modalBody.innerHTML = '<form id="edit-clamp-form" class="form-grid">' +
+      '<label class="field"><span>BKPH</span><select id="edit-clamp-bkph" required>' + bkphOptions + '</select></label>' +
+      '<label class="field"><span>RPH</span><select id="edit-clamp-rph" required><option value="">Pilih RPH</option>' + rphOptions + '</select></label>' +
+      '<label class="field full"><span>Jenis pohon utama</span><select id="edit-clamp-species" required><option value="">Pilih jenis pohon</option>' + speciesOpts + '</select></label>' +
+      '<label class="field"><span>Nama blok</span><input id="edit-clamp-block" type="text" required maxlength="120" value="' + U.escapeHtml(clamp.block) + '"></label>' +
+      '<label class="field"><span>Anak petak</span><input id="edit-clamp-compartment" type="text" required maxlength="120" value="' + U.escapeHtml(clamp.compartment) + '"></label>' +
+      '<input type="hidden" id="edit-clamp-id" value="' + clamp.id + '">' +
+      '<button class="btn btn-primary full" type="submit">Simpan Perubahan</button>' +
+      '</form>';
+
+    var editBphpSelect = document.getElementById("edit-clamp-bkph");
+    if (editBphpSelect) {
+      editBphpSelect.onchange = function() {
+        var bkphVal = editBphpSelect.value;
+        var rphOpts = bkphVal && Array.isArray(App.storage.bkphData[bkphVal])
+          ? App.storage.bkphData[bkphVal].slice().sort(function(a, b) { return a.localeCompare(b, "id"); })
+          : [];
+        var rphSelect = document.getElementById("edit-clamp-rph");
+        if (rphSelect) {
+          rphSelect.innerHTML = '<option value="">Pilih RPH</option>' +
+            rphOpts.map(function(r) { return '<option value="' + U.escapeHtml(r) + '">' + U.escapeHtml(r) + '</option>'; }).join("");
+        }
+      };
+    }
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.getElementById("edit-clamp-form").addEventListener("submit", handleEditClampSubmit);
+  }
+
+  function handleEditClampSubmit(e) {
+    e.preventDefault();
+    var state = App.storage.state;
+    var clampId = document.getElementById("edit-clamp-id") && document.getElementById("edit-clamp-id").value;
+    var clamp = state.clamps.find(function(c) { return c.id === clampId; });
+    if (!clamp) return;
+
+    var bkph = (document.getElementById("edit-clamp-bkph") && document.getElementById("edit-clamp-bkph").value || "").trim();
+    var rph = (document.getElementById("edit-clamp-rph") && document.getElementById("edit-clamp-rph").value || "").trim();
+    var speciesId = (document.getElementById("edit-clamp-species") && document.getElementById("edit-clamp-species").value || "").trim();
+    var block = (document.getElementById("edit-clamp-block") && document.getElementById("edit-clamp-block").value || "").trim();
+    var compartment = (document.getElementById("edit-clamp-compartment") && document.getElementById("edit-clamp-compartment").value || "").trim();
+
+    if (!bkph || !rph || !speciesId || !block || !compartment) {
+      App.components.showToast("Lengkapi seluruh data.");
+      return;
+    }
+
+    clamp.bkph = bkph;
+    clamp.rph = rph;
+    clamp.speciesId = speciesId;
+    clamp.block = block;
+    clamp.compartment = compartment;
+
+    App.storage.saveState();
+    App.components.closeModal();
+    App.components.renderClampSpeciesSelect();
+    App.components.renderClamps();
+    App.components.renderRecap();
+    App.components.showToast("Daftar klem berhasil diperbarui.");
   }
 
   function handleClampListClick(e) {
@@ -269,6 +379,12 @@
       App.components.renderClamps();
       var card = document.querySelector('[data-clamp-id="' + clamp.id + '"]');
       card && card.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (action === "edit-clamp") {
+      var editClamp = state.clamps.find(function(c) { return c.id === id; });
+      if (!editClamp) return;
+      showEditClampModal(editClamp);
       return;
     }
     if (action === "export-clamp") {
@@ -303,6 +419,14 @@
       App.components.showToast("Data pohon dihapus.");
       return;
     }
+    if (action === "edit-tree") {
+      var editClamp = state.clamps.find(function(c) { return c.id === btn.dataset.clampId; });
+      if (!editClamp) return;
+      var editTree = (editClamp.trees || []).find(function(t) { return t.id === btn.dataset.treeId; });
+      if (!editTree) return;
+      showEditTreeModal(editClamp, editTree);
+      return;
+    }
     if (action === "tree-prev" || action === "tree-next") {
       var clamp4 = state.clamps.find(function(c) { return c.id === btn.dataset.clampId; });
       if (!clamp4) return;
@@ -329,6 +453,101 @@
     }
   }
 
+  function showEditTreeModal(clamp, tree) {
+    var modal = document.getElementById("clamp-modal");
+    var modalTitle = document.getElementById("modal-title");
+    var modalBody = document.getElementById("modal-body");
+    if (!modal || !modalTitle || !modalBody) return;
+
+    var state = App.storage.state;
+    var speciesOptions = (function() {
+      var opts = [];
+      var existingIds = (state.species || []).map(function(s) { return s.tvlId; });
+      (state.species || []).slice().sort(function(a, b) { return a.name.localeCompare(b.name, "id"); }).forEach(function(item) {
+        opts.push({ value: item.id, label: item.name, selected: item.id === tree.speciesId });
+      });
+      Object.values(state.tvls || {}).forEach(function(tvl) {
+        if (existingIds.indexOf(tvl.id) !== -1) return;
+        opts.push({ value: tvl.id, label: tvl.species || tvl.name || tvl.id, selected: tvl.id === tree.speciesId });
+      });
+      opts.sort(function(a, b) { return a.label.localeCompare(b.label, "id"); });
+      return opts.map(function(o) {
+        return '<option value="' + U.escapeHtml(o.value) + '"' + (o.selected ? ' selected' : '') + '>' + U.escapeHtml(o.label) + '</option>';
+      }).join("");
+    })();
+
+    modalTitle.textContent = "Edit Pohon " + tree.treeNumber;
+    modalBody.innerHTML = '<form id="edit-tree-form" class="form-grid">' +
+      '<label class="field full"><span>No. Pohon</span><input id="edit-tree-number" type="text" required maxlength="60" value="' + U.escapeHtml(tree.treeNumber) + '" readonly></label>' +
+      '<label class="field full"><span>Jenis Pohon</span><select id="edit-tree-species" required>' + speciesOptions + '</select></label>' +
+      '<label class="field full"><span>Keliling (cm)</span><input id="edit-tree-circumference" type="number" min="0" step="0.1" required value="' + tree.circumference + '"></label>' +
+      '<label class="field full"><span>Keterangan</span><textarea id="edit-tree-note" maxlength="500">' + U.escapeHtml(tree.note || "") + '</textarea></label>' +
+      '<input type="hidden" id="edit-tree-clamp-id" value="' + clamp.id + '">' +
+      '<input type="hidden" id="edit-tree-id" value="' + tree.id + '">' +
+      '<button class="btn btn-primary full" type="submit">Simpan</button>' +
+      '</form>';
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.getElementById("edit-tree-form").addEventListener("submit", handleEditTreeSubmit);
+  }
+
+  function handleEditTreeSubmit(e) {
+    e.preventDefault();
+    var state = App.storage.state;
+    var clampId = document.getElementById("edit-tree-clamp-id") && document.getElementById("edit-tree-clamp-id").value;
+    var treeId = document.getElementById("edit-tree-id") && document.getElementById("edit-tree-id").value;
+    var clamp = state.clamps.find(function(c) { return c.id === clampId; });
+    if (!clamp) return;
+    var tree = (clamp.trees || []).find(function(t) { return t.id === treeId; });
+    if (!tree) return;
+
+    var newSpeciesId = (document.getElementById("edit-tree-species") && document.getElementById("edit-tree-species").value || "").trim();
+    var newCircumference = Number(document.getElementById("edit-tree-circumference") && document.getElementById("edit-tree-circumference").value);
+    var newTreeNumber = (document.getElementById("edit-tree-number") && document.getElementById("edit-tree-number").value || "").trim();
+    var newNote = (document.getElementById("edit-tree-note") && document.getElementById("edit-tree-note").value || "").trim();
+
+    if (!newSpeciesId || !newTreeNumber) {
+      App.components.showToast("Lengkapi data pohon.");
+      return;
+    }
+    if (!Number.isFinite(newCircumference) || newCircumference <= 0) {
+      App.components.showToast("Masukkan keliling yang valid.");
+      return;
+    }
+
+    if ((clamp.trees || []).some(function(t) { return t.id !== treeId && t.treeNumber.toLowerCase() === newTreeNumber.toLowerCase(); })) {
+      App.components.showToast("Nomor pohon sudah digunakan.");
+      return;
+    }
+
+    var lookup = App.tvl && App.tvl.lookupVolume(newSpeciesId, newCircumference);
+    var sp = App.storage.getSpecies(newSpeciesId);
+    var tvl = sp ? state.tvls[sp.tvlId] : (state.tvls[newSpeciesId] || null);
+    var tvlId = (sp && sp.tvlId) || (tvl ? newSpeciesId : null);
+    var isBerkhout = tvl && tvl.model === "berkhout";
+
+    tree.treeNumber = newTreeNumber;
+    tree.speciesId = newSpeciesId;
+    tree.circumference = newCircumference;
+    tree.tvlId = tvlId;
+    tree.note = newNote;
+
+    if (lookup) {
+      tree.volume = lookup.volume;
+      tree.diameter = lookup.diameter;
+      tree.height = lookup.height;
+      tree.tvlCircumference = isBerkhout ? newCircumference : lookup.matchedCircumference;
+      tree.volumeUpdatedAt = new Date().toISOString();
+    }
+
+    App.storage.saveState();
+    App.components.closeModal();
+    App.components.renderClamps();
+    App.components.renderRecap();
+    App.components.showToast("Data pohon berhasil diperbarui.");
+  }
+
   function handleTreeEntrySubmit(e) {
     var form = e.target.closest(".tree-entry-form");
     if (!form) return;
@@ -339,28 +558,34 @@
     var speciesId = String(data.get("speciesId") || "");
     var circumference = Number(data.get("circumference"));
     var lookup = App.tvl && App.tvl.lookupVolume(speciesId, circumference);
-    var treeNumber = String(data.get("treeNumber") || "").trim();
     var state = App.storage.state;
 
-    if (!state.species.length) {
-      App.components.showToast("Belum ada jenis kayu. Tambahkan di halaman \"Tambah Pohon\" terlebih dahulu.");
-      return;
-    }
     if (!speciesId) {
-      App.components.showToast("Pilih jenis kayu.");
+      App.components.showToast("Pilih jenis pohon.");
       return;
     }
-    if (!treeNumber || !Number.isFinite(circumference) || !lookup) {
-      App.components.showToast("Lengkapi nomor pohon, jenis kayu, dan keliling yang valid.");
+    if (!Number.isFinite(circumference) || circumference <= 0) {
+      App.components.showToast("Masukkan keliling yang valid.");
       return;
     }
-    if ((clamp.trees || []).some(function(t) { return t.treeNumber.toLowerCase() === treeNumber.toLowerCase(); })) {
-      App.components.showToast("Nomor pohon tersebut sudah ada pada daftar ini.");
+    if (!lookup) {
+      App.components.showToast("TVL tidak ditemukan untuk jenis pohon ini.");
       return;
     }
+
     var sp = App.storage.getSpecies(speciesId);
-    var tvlId = sp && sp.tvlId || null;
-    var tvl = tvlId && App.storage.state.tvls[tvlId];
+    var tvl = sp ? state.tvls && state.tvls[sp.tvlId] : state.tvls && state.tvls[speciesId];
+    var speciesName = sp ? sp.name : (tvl ? (tvl.species || tvl.name || "KAYU") : "KAYU");
+
+    var speciesTreeCount = (clamp.trees || []).filter(function(t) { return t.speciesId === speciesId; }).length;
+    var treeNumber = String(speciesTreeCount + 1);
+
+    while ((clamp.trees || []).some(function(t) { return t.treeNumber === treeNumber && t.speciesId === speciesId; })) {
+      speciesTreeCount++;
+      treeNumber = String(speciesTreeCount + 1);
+    }
+
+    var tvlId = (sp && sp.tvlId) || (tvl ? speciesId : null);
     var isBerkhout = tvl && tvl.model === "berkhout";
     clamp.trees = clamp.trees || [];
     var newTree = {
@@ -376,7 +601,6 @@
       note: String(data.get("note") || "").trim(),
       createdAt: new Date().toISOString()
     };
-    // Save diameter and height for berkhout model
     if (isBerkhout) {
       newTree.diameter = lookup.diameter;
       newTree.height = lookup.height;
@@ -412,7 +636,6 @@
     }
   }
 
-  // ---- Recap ----
   function bindRecap() {
     var el = App.components.el;
     el("export-btn") && el("export-btn").addEventListener("click", function() {
@@ -421,7 +644,6 @@
     });
   }
 
-  // ---- Master data ----
   function bindMaster() {
     var el = App.components.el;
     el("backup-btn") && el("backup-btn").addEventListener("click", function() {
@@ -436,9 +658,14 @@
     });
     el("restore-file") && el("restore-file").addEventListener("change", handleRestore);
     el("clear-all-btn") && el("clear-all-btn").addEventListener("click", function() {
-      App.storage.clearAllDataExceptTvl();
-      App.components.renderAll();
-      App.components.showToast("Semua data berhasil dihapus. TVL tetap tersimpan.");
+      var cleared = App.storage.clearAllDataExceptTvl();
+      if (cleared) {
+        bindClampForm();
+        App.storage.clampPage = 1;
+        App.components.renderAll();
+        App.components.switchPage("trees", false);
+        App.components.showToast("Semua data berhasil dihapus. TVL tetap tersimpan.");
+      }
     });
   }
 
@@ -473,7 +700,6 @@
     }).finally(function() { e.target.value = ""; });
   }
 
-  // ---- Global ----
   function bindGlobal() {
     var el = App.components.el;
     el("modal-close") && el("modal-close").addEventListener("click", App.components.closeModal);

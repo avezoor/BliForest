@@ -1,9 +1,5 @@
 "use strict";
 
-// ============================================================
-// BKPH / RPH Data Module
-// ============================================================
-
 (function(global) {
   var App = global.App || {};
 
@@ -19,12 +15,9 @@
 
   function loadBkphRphData() {
     var bundled = window.BLIFOREST_BKPH_DATA;
-    var clone = global.Utils ? global.Utils.structuredCloneSafe : function(v) {
-      return JSON.parse(JSON.stringify(v));
-    };
+    var clone = global.Utils ? global.Utils.structuredCloneSafe : function(v) { return JSON.parse(JSON.stringify(v)); };
     var data = isValidBkphData(bundled) ? clone(bundled) : {};
 
-    // If offline, skip network fetch entirely (bundled data is primary source)
     if (!navigator.onLine) {
       Object.assign(App.storage.bkphData, data);
       return Promise.resolve();

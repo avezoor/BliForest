@@ -8,11 +8,10 @@
   "model": "berkhout",
   "formula": {
     "volume": "V = a * K^b * f",
-    "diameter": "D = K / π",
-    "height": "H = (40000 * π * a * K^(b-2)) / fc"
+    "diameter": "D = K / π"
   },
   "coefficients": {
-    "a": 0.0000312518202,
+    "a": 3.12518202e-05,
     "b": 2.15,
     "factor": 1,
     "factor_correction": 0.7
@@ -20,9 +19,6 @@
   "K": {
     "unit": "cm",
     "description": "Keliling"
-  },
-  "height": {
-    "unit": "m"
   },
   "diameter": {
     "unit": "cm"
