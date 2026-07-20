@@ -17,7 +17,7 @@ function init() {
   App.handlers.bindNav();
   App.handlers.bindSidebar();
   App.handlers.bindTree();
-  App.handlers.bindClampForm();
+  // bindClampForm() dipanggil setelah data BKPH load selesai (lihat baris 27-28)
   App.handlers.bindClampEvents();
   App.handlers.bindRecap();
   App.handlers.bindMaster();
