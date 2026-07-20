@@ -159,44 +159,31 @@
     App.components.showToast("Jenis kayu dihapus.");
   }
 
-  // Store listener reference untuk menghindari duplikat
-  var bkphChangeHandler = null;
-
   // ---- Clamp form ----
   function bindClampForm() {
     var el = App.components.el;
-    var form = el("clamp-form");
-    var page = document.getElementById("page-clamps");
-
-    if (form && page) {
-      var inputs = form.querySelectorAll("input, select, textarea");
-      inputs.forEach(function(input) {
-        input.addEventListener("focus", function() { page.classList.add("form-focused"); });
-        input.addEventListener("blur", function() { page.classList.remove("form-focused"); });
-      });
-    }
 
     // Render BKPH select
     var bkphKeys = Object.keys(App.storage.bkphData || {}).sort(function(a, b) { return a.localeCompare(b, "id"); });
-    el("clamp-bkph").innerHTML = '<option value="">Pilih BKPH</option>' +
-      bkphKeys.map(function(k) { return '<option value="' + U.escapeHtml(k) + '">' + U.escapeHtml(k) + '</option>'; }).join("");
-
-    // Hapus listener lama sebelum menambahkan yang baru untuk menghindari duplikat
-    if (bkphChangeHandler && el("clamp-bkph")) {
-      el("clamp-bkph").removeEventListener("change", bkphChangeHandler);
+    if (el("clamp-bkph")) {
+      el("clamp-bkph").innerHTML = '<option value="">Pilih BKPH</option>' +
+        bkphKeys.map(function(k) { return '<option value="' + U.escapeHtml(k) + '">' + U.escapeHtml(k) + '</option>'; }).join("");
     }
 
-    bkphChangeHandler = function() {
-      var bkphVal = el("clamp-bkph").value;
-      var rphOpts = bkphVal && Array.isArray(App.storage.bkphData[bkphVal])
-        ? App.storage.bkphData[bkphVal].slice().sort(function(a, b) { return a.localeCompare(b, "id"); })
-        : [];
-      el("clamp-rph").innerHTML = '<option value="">' + (bkphVal ? "Pilih RPH" : "Pilih BKPH terlebih dahulu") + '</option>' +
-        rphOpts.map(function(r) { return '<option value="' + U.escapeHtml(r) + '">' + U.escapeHtml(r) + '</option>'; }).join("");
-      el("clamp-rph").disabled = !bkphVal;
-    };
-
-    el("clamp-bkph") && el("clamp-bkph").addEventListener("change", bkphChangeHandler);
+    // BKPH change handler - populate RPH dropdown
+    if (el("clamp-bkph")) {
+      el("clamp-bkph").onchange = function() {
+        var bkphVal = el("clamp-bkph").value;
+        var rphOpts = bkphVal && Array.isArray(App.storage.bkphData[bkphVal])
+          ? App.storage.bkphData[bkphVal].slice().sort(function(a, b) { return a.localeCompare(b, "id"); })
+          : [];
+        if (el("clamp-rph")) {
+          el("clamp-rph").innerHTML = '<option value="">' + (bkphVal ? "Pilih RPH" : "Pilih BKPH terlebih dahulu") + '</option>' +
+            rphOpts.map(function(r) { return '<option value="' + U.escapeHtml(r) + '">' + U.escapeHtml(r) + '</option>'; }).join("");
+          el("clamp-rph").disabled = !bkphVal;
+        }
+      };
+    }
   }
 
   function bindClampEvents() {

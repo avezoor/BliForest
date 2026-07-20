@@ -4,7 +4,7 @@
 // sedang online mengambil HTML/CSS/JS terbaru, sedangkan mode offline tetap
 // memakai salinan terakhir yang berhasil disimpan.
 const CACHE_PREFIX = "BliForest-";
-const CACHE_NAME = CACHE_PREFIX + "BliForest-1.4.5-2026.07.18-23:13";
+const CACHE_NAME = CACHE_PREFIX + "BliForest-1.4.6-2026.07.20-09:03";
 
 const CORE_FILES = [
   "./",
