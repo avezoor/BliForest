@@ -244,6 +244,12 @@
     _el["clamp-list"].innerHTML = paged.map(function(clamp) { return renderClampCard(clamp); }).join("") +
       (filtered.length > CLAMPS_PER_PAGE ? renderClampPagination(safePage, totalPages) : "");
     Array.prototype.slice.call(document.querySelectorAll(".tree-entry-form")).forEach(updateVolumeForForm);
+    // Update preview nomor pohon untuk setiap tree-entry form
+    Array.prototype.slice.call(document.querySelectorAll(".tree-entry-form")).forEach(function(form) {
+      if (App.handlers && App.handlers.updateTreeNumberPreview) {
+        App.handlers.updateTreeNumberPreview(form);
+      }
+    });
   }
 
   function renderClampPagination(curPage, totalPages) {
@@ -304,8 +310,9 @@
           '<span><b>Jenis:</b> ' + U.escapeHtml(speciesName) + '</span>' +
         '</div>' +
         '<h5 class="detail-title">Tambah Data Pohon</h5>' +
-        '<form class="tree-entry-form" data-clamp-id="' + clamp.id + '">' +
+        '<form class="tree-entry-form" data-clamp-id="' + clamp.id + '" data-block="' + U.escapeHtml(clamp.block) + '">' +
           '<label class="field"><span>Jenis Pohon</span><select name="speciesId" required>' + speciesOptionsHtml(clamp.speciesId) + '</select></label>' +
+          '<div class="tree-number-preview" style="margin-bottom:12px;padding:8px 12px;background:#e8f5e9;border-radius:6px;font-size:0.82rem;color:#1a5c1a;display:none"><span>🔢 No. pohon berikutnya: </span><strong class="preview-no"></strong><span class="preview-rule" style="margin-left:8px;color:#555;font-size:0.78rem"></span></div>' +
           '<label class="field"><span>Keliling (cm)</span><input name="circumference" type="number" min="0" step="0.1" required placeholder="0"></label>' +
           '<label class="field"><span>Volume (m3)</span><input name="volume" type="text" readonly value="0,0000"></label>' +
           '<label class="field full"><span>Keterangan</span><textarea name="note" maxlength="500" placeholder="Keterangan"></textarea></label>' +

@@ -197,6 +197,98 @@
     }
   }
 
+  // ================================================================
+  // PREVIEW NOMOR POHON (dipasang saat form tree-entry dirender)
+  // ================================================================
+  function updateTreeNumberPreview(form) {
+    if (!form) return;
+    var speciesId = form.elements && form.elements.speciesId && form.elements.speciesId.value;
+    var block = form.dataset.block;
+    var preview = form.querySelector(".tree-number-preview");
+    var noEl = preview && preview.querySelector(".preview-no");
+    var ruleEl = preview && preview.querySelector(".preview-rule");
+    if (!preview || !noEl || !ruleEl) return;
+
+    if (!speciesId || !block) {
+      preview.style.display = "none";
+      return;
+    }
+
+    var state = App.storage.state;
+    var sp = App.storage.getSpecies(speciesId);
+    var speciesName = sp ? sp.name : speciesId;
+
+    function parseTreeNum(n) {
+      var x = parseInt(n, 10);
+      return isNaN(x) ? 0 : x;
+    }
+
+    var allTrees = (state.clamps || []).reduce(function(acc, c) {
+      return acc.concat((c.trees || []).map(function(t) {
+        return { treeNumber: t.treeNumber, speciesId: t.speciesId, block: c.block };
+      }));
+    }, []);
+
+    function getTreesInBlock(b) {
+      return allTrees.filter(function(t) { return t.block === b; });
+    }
+
+    function getLastTreeOfSpeciesInBlock(b, sid) {
+      var trees = getTreesInBlock(b).filter(function(t) { return t.speciesId === sid; });
+      if (!trees.length) return null;
+      return trees.reduce(function(prev, curr) {
+        return parseTreeNum(prev.treeNumber) >= parseTreeNum(curr.treeNumber) ? prev : curr;
+      });
+    }
+
+    function getLastTreeInBlock(b) {
+      var trees = getTreesInBlock(b);
+      if (!trees.length) return null;
+      return trees.reduce(function(prev, curr) {
+        return parseTreeNum(prev.treeNumber) >= parseTreeNum(curr.treeNumber) ? prev : curr;
+      });
+    }
+
+    var usedBlocks = [];
+    (state.clamps || []).forEach(function(c) {
+      if (usedBlocks.indexOf(c.block) === -1) usedBlocks.push(c.block);
+    });
+
+    var prevTreeOfSameSpecies = getLastTreeOfSpeciesInBlock(block, speciesId);
+    var lastTreeInBlock = getLastTreeInBlock(block);
+    var nextNo;
+    var ruleText = "";
+
+    if (prevTreeOfSameSpecies) {
+      nextNo = parseTreeNum(prevTreeOfSameSpecies.treeNumber) + 1;
+      ruleText = "(Blok sama + jenis sama → lanjut sequential)";
+    } else if (lastTreeInBlock) {
+      nextNo = parseTreeNum(lastTreeInBlock.treeNumber) + 1;
+      ruleText = "(Blok sama + jenis berbeda → mulai dari N+1)";
+    } else {
+      var cbIdx = usedBlocks.indexOf(block);
+      var foundPrevBlock = false;
+      for (var i = cbIdx - 1; i >= 0; i--) {
+        var pb = usedBlocks[i];
+        var pbLast = getLastTreeInBlock(pb);
+        if (pbLast) {
+          nextNo = parseTreeNum(pbLast.treeNumber) + 1;
+          ruleText = "(Blok berbeda → lanjut dari Blok " + pb + ")";
+          foundPrevBlock = true;
+          break;
+        }
+      }
+      if (!foundPrevBlock) {
+        nextNo = 1;
+        ruleText = "(Blok baru → mulai dari #1)";
+      }
+    }
+
+    noEl.textContent = "#" + nextNo;
+    ruleEl.textContent = ruleText;
+    preview.style.display = "block";
+  }
+
   function bindClampEvents() {
     var el = App.components.el;
     el("clamp-form") && el("clamp-form").addEventListener("submit", handleClampSubmit);
@@ -211,6 +303,19 @@
       if (el("clamp-search")) el("clamp-search").value = "";
       App.storage.clampPage = 1;
       App.components.renderClamps();
+    });
+    // Preview nomor pohon saat species berubah (delegated ke clamp-list)
+    el("clamp-list") && el("clamp-list").addEventListener("change", function(e) {
+      var speciesSelect = e.target.closest(".tree-entry-form") && e.target.name === "speciesId";
+      if (speciesSelect) {
+        updateTreeNumberPreview(e.target.closest(".tree-entry-form"));
+      }
+    });
+    el("clamp-list") && el("clamp-list").addEventListener("input", function(e) {
+      var speciesSelect = e.target.closest(".tree-entry-form") && e.target.name === "speciesId";
+      if (speciesSelect) {
+        updateTreeNumberPreview(e.target.closest(".tree-entry-form"));
+      }
     });
     el("clamp-list") && el("clamp-list").addEventListener("click", handleClampListClick);
     el("clamp-list") && el("clamp-list").addEventListener("submit", handleTreeEntrySubmit);
@@ -573,16 +678,92 @@
       return;
     }
 
+    // ================================================================
+    // LOGIKA PENOMORAN POHON (SKHP)
+    //
+    //   Aturan:
+    //   1. Blok sama + Jenis sama     → sequential (1, 2, 3...)
+    //   2. Blok sama + Jenis berbeda → mulai dari (no terakhir blok tersebut) + 1
+    //   3. Blok berbeda              → lanjut dari no terakhir blok sebelumnya (tidak reset)
+    // ================================================================
+
     var sp = App.storage.getSpecies(speciesId);
     var tvl = sp ? state.tvls && state.tvls[sp.tvlId] : state.tvls && state.tvls[speciesId];
     var speciesName = sp ? sp.name : (tvl ? (tvl.species || tvl.name || "KAYU") : "KAYU");
 
-    var speciesTreeCount = (clamp.trees || []).filter(function(t) { return t.speciesId === speciesId; }).length;
-    var treeNumber = String(speciesTreeCount + 1);
+    // Ambil semua pohon dari SEMUA clamp
+    var allTrees = (state.clamps || []).reduce(function(acc, c) {
+      return acc.concat((c.trees || []).map(function(t) {
+        return { treeNumber: t.treeNumber, speciesId: t.speciesId, block: c.block, clampId: c.id };
+      }));
+    }, []);
 
-    while ((clamp.trees || []).some(function(t) { return t.treeNumber === treeNumber && t.speciesId === speciesId; })) {
-      speciesTreeCount++;
-      treeNumber = String(speciesTreeCount + 1);
+    // Helper: parse nomor pohon jadi integer
+    function parseTreeNum(n) {
+      var x = parseInt(n, 10);
+      return isNaN(x) ? 0 : x;
+    }
+
+    // Helper: dapat daftar pohon di blok tertentu
+    function getTreesInBlock(block) {
+      return allTrees.filter(function(t) { return t.block === block; });
+    }
+
+    // Helper: dapat pohon terakhir dari species tertentu dalam blok tertentu
+    function getLastTreeOfSpeciesInBlock(block, sid) {
+      var trees = getTreesInBlock(block).filter(function(t) { return t.speciesId === sid; });
+      if (!trees.length) return null;
+      return trees.reduce(function(prev, curr) {
+        return parseTreeNum(prev.treeNumber) >= parseTreeNum(curr.treeNumber) ? prev : curr;
+      });
+    }
+
+    // Helper: dapat pohon terakhir DI BLOK tersebut (apapun speciesnya)
+    function getLastTreeInBlock(block) {
+      var trees = getTreesInBlock(block);
+      if (!trees.length) return null;
+      return trees.reduce(function(prev, curr) {
+        return parseTreeNum(prev.treeNumber) >= parseTreeNum(curr.treeNumber) ? prev : curr;
+      });
+    }
+
+    // Helper: dapat blok-blok yang sudah ada dalam urutan (berdasarkan clamp creation atau
+    // gunakan kolom block dan urutkan alfabet)
+    var usedBlocks = [];
+    (state.clamps || []).forEach(function(c) {
+      if (usedBlocks.indexOf(c.block) === -1) usedBlocks.push(c.block);
+    });
+
+    // Tentukan tree number baru berdasarkan aturan
+    var currentBlock = clamp.block;
+    var prevTreeOfSameSpecies = getLastTreeOfSpeciesInBlock(currentBlock, speciesId);
+    var lastTreeInBlock = getLastTreeInBlock(currentBlock);
+    var treeNumber;
+
+    if (prevTreeOfSameSpecies) {
+      // ATURAN 1: Blok sama + Jenis sama → sequential
+      treeNumber = String(parseTreeNum(prevTreeOfSameSpecies.treeNumber) + 1);
+    } else if (lastTreeInBlock) {
+      // ATURAN 2: Blok sama + Jenis berbeda → mulai dari N+1 blok tersebut
+      treeNumber = String(parseTreeNum(lastTreeInBlock.treeNumber) + 1);
+    } else {
+      // Blok belum punya pohon sama sekali → cek blok sebelumnya
+      var currentBlockIdx = usedBlocks.indexOf(currentBlock);
+      var foundPrevBlock = false;
+      for (var i = currentBlockIdx - 1; i >= 0; i--) {
+        var prevBlock = usedBlocks[i];
+        var prevBlockLast = getLastTreeInBlock(prevBlock);
+        if (prevBlockLast) {
+          // ATURAN 3: Blok berbeda → lanjut dari no terakhir blok sebelumnya
+          treeNumber = String(parseTreeNum(prevBlockLast.treeNumber) + 1);
+          foundPrevBlock = true;
+          break;
+        }
+      }
+      if (!foundPrevBlock) {
+        // Benar-benar blok baru pertama
+        treeNumber = "1";
+      }
     }
 
     var tvlId = (sp && sp.tvlId) || (tvl ? speciesId : null);
@@ -721,7 +902,8 @@
     bindClampEvents: bindClampEvents,
     bindRecap: bindRecap,
     bindMaster: bindMaster,
-    bindGlobal: bindGlobal
+    bindGlobal: bindGlobal,
+    updateTreeNumberPreview: updateTreeNumberPreview
   };
 
   global.App = App;

@@ -1,7 +1,7 @@
 "use strict";
 
-window.APP_VERSION = "1.4.7";
-window.APP_UPDATED_AT = "2026-07-20 22:31";
+window.APP_VERSION = "1.4.8";
+window.APP_UPDATED_AT = "2026-07-22 22:42";
 window.APP_DATA_VERSION = 6;
 
 window.STORAGE_KEY = "bliforest-offline-data";
