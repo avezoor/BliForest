@@ -1,7 +1,7 @@
 "use strict";
 
 const CACHE_PREFIX = "BliForest-";
-const CACHE_NAME = CACHE_PREFIX + "BliForest-1.5.3-2026.07.24-10:41";
+const CACHE_NAME = CACHE_PREFIX + "BliForest-1.5.4-2026.07.24-11:17";
 
 const CORE_FILES = [
   "./",

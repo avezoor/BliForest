@@ -148,8 +148,7 @@
         }
         infoParts.push("a = " + (coef && coef.a || "-"));
         infoParts.push("b = " + (coef && coef.b || "-"));
-        var displayFactor = coef ? (coef.factor_correction || coef.factor || 1) : 1;
-        infoParts.push("f = " + displayFactor);
+        infoParts.push("f = " + factor);
       } else {
         infoParts.push("TVL tidak ditemukan");
       }

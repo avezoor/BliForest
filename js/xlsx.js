@@ -210,7 +210,7 @@
       '<dc:creator>BliForest</dc:creator><cp:lastModifiedBy>BliForest</cp:lastModifiedBy><dcterms:created xsi:type="dcterms:W3CDTF">' + now + '</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">' + now + '</dcterms:modified></cp:coreProperties>';
 
     var app = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-      '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>BliForest</Application><AppVersion>1.5.3</AppVersion></Properties>';
+      '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>BliForest</Application><AppVersion>1.5.4</AppVersion></Properties>';
 
     return [
       { name: "[Content_Types].xml", data: contentTypes },

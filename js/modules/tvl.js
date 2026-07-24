@@ -35,10 +35,8 @@
     if (!tvl || !tvl.coefficients || !Number.isFinite(circumference)) return null;
     var a = Number(tvl.coefficients.a);
     var b = Number(tvl.coefficients.b);
-    var factorCorrection = Number(tvl.coefficients.factor_correction);
     if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
-    if (!Number.isFinite(factorCorrection) || factorCorrection === 0) factorCorrection = 1;
-    return (40000 * PI * a * Math.pow(circumference, b - 2)) / factorCorrection;
+    return 40000 * PI * a * Math.pow(circumference, b - 2);
   }
 
   function calculateTreeMetrics(tvl, circumference) {
@@ -203,8 +201,7 @@
         coefficients: {
           a: Number(raw.coefficients && raw.coefficients.a) || 0,
           b: Number(raw.coefficients && raw.coefficients.b) || 0,
-          factor: Number(raw.coefficients && raw.coefficients.factor) || 1,
-          factor_correction: Number(raw.coefficients && raw.coefficients.factor_correction) || 1
+          factor: Number(raw.coefficients && raw.coefficients.factor) || 1
         },
         K: raw.K || { unit: "cm" },
         diameter: raw.diameter || { unit: "cm" },
@@ -397,6 +394,62 @@
     return changed;
   }
 
+  function migrateLegacyDirectTvlSpecies() {
+    var state = App.storage.state;
+    var migratedIds = [];
+
+    (state.species || []).forEach(function(species) {
+      var baseTvl = state.tvls && state.tvls[species.tvlId];
+      if (!baseTvl || baseTvl.version === "custom") return;
+
+      // Versi lama menyimpan perkalian=1 dengan menunjuk langsung ke TVL induk.
+      // Itu keliru: TVL induk hanya sumber koefisien a dan b; faktor bawaan TVL
+      // tidak boleh ikut ke jenis pohon. Semua referensi legacy langsung ini
+      // dikonversi menjadi TVL custom dengan faktor eksplisit 1.
+      var a = Number(baseTvl.coefficients && baseTvl.coefficients.a);
+      var b = Number(baseTvl.coefficients && baseTvl.coefficients.b);
+      if (!Number.isFinite(a) || !Number.isFinite(b) || a <= 0 || b <= 0) return;
+
+      var safeSpeciesId = String(species.id || Date.now()).replace(/[^a-zA-Z0-9_-]/g, "_");
+      var newId = "tvl_custom_factor1_" + safeSpeciesId;
+      var derived = state.tvls[newId];
+
+      if (!derived) {
+        derived = {
+          id: newId,
+          name: "TVL " + species.name,
+          species: species.name,
+          normalizedSpecies: species.name,
+          version: "custom",
+          updatedAt: new Date().toISOString(),
+          model: "berkhout",
+          sourceMode: "tvl",
+          baseTvlId: baseTvl.id,
+          formula: {
+            volume: "V = a * K^b * f",
+            diameter: "D = K / π",
+            height: "H = 40000 * π * a * K^(b-2)"
+          },
+          coefficients: {
+            a: a,
+            b: b,
+            factor: 1
+          },
+          K: { unit: "cm", description: "Keliling" },
+          diameter: { unit: "cm" },
+          height: { unit: "m" },
+          volume: { unit: "m3" }
+        };
+        state.tvls[newId] = derived;
+      }
+
+      species.tvlId = newId;
+      migratedIds.push(newId);
+    });
+
+    return migratedIds;
+  }
+
   function replaceTvls(loaded) {
     var changedIds = [];
     var state = App.storage.state;
@@ -428,10 +481,12 @@
         state.tvlSync.managedIds = Array.from(new Set((state.tvlSync.managedIds || []).concat(loadedIds)));
         state.tvlSync.dataSource = navigator.onLine ? "local-ready" : "local-offline";
 
+        var migratedIds = migrateLegacyDirectTvlSpecies();
         if (changedIds.length) recalculateTreeVolumes(changedIds);
+        if (migratedIds.length) recalculateTreeVolumes(migratedIds);
         App.storage.saveState();
 
-        return { manifest: manifest, loadedIds: loadedIds, changedTvlIds: changedIds, source: "local" };
+        return { manifest: manifest, loadedIds: loadedIds, changedTvlIds: changedIds.concat(migratedIds), source: "local" };
       });
     }).catch(function(error) {
       console.warn("TVL lokal tidak dapat dimuat sepenuhnya:", error);

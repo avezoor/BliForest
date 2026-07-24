@@ -65,23 +65,44 @@
         return;
       }
 
-      if (factor === 1) {
-        tvlId = selectedTvlId;
-      } else {
-        tvlId = "tvl_custom_" + U.createId("custom");
-        var baseTvl = state.tvls[selectedTvlId];
-        var customTvl = JSON.parse(JSON.stringify(baseTvl));
-        customTvl.id = tvlId;
-        customTvl.name = "TVL " + name;
-        customTvl.species = name;
-        customTvl.normalizedSpecies = name;
-        customTvl.version = "custom";
-        customTvl.updatedAt = new Date().toISOString();
-        customTvl.coefficients = JSON.parse(JSON.stringify(baseTvl.coefficients || {}));
-        customTvl.coefficients.factor = factor;
-        delete customTvl.coefficients.factor_correction;
-        state.tvls[tvlId] = customTvl;
+      var baseTvl = state.tvls[selectedTvlId];
+      var baseA = Number(baseTvl.coefficients && baseTvl.coefficients.a);
+      var baseB = Number(baseTvl.coefficients && baseTvl.coefficients.b);
+      if (!Number.isFinite(baseA) || !Number.isFinite(baseB) || baseA <= 0 || baseB <= 0) {
+        App.components.showToast("TVL terpilih tidak memiliki koefisien a dan b yang valid.");
+        return;
       }
+
+      // TVL induk hanya menjadi sumber koefisien a dan b.
+      // Faktor/perkalian selalu berasal dari input pengguna dan tidak pernah diwarisi
+      // dari coefficients.factor milik TVL bawaan, termasuk saat perkalian = 1.
+      tvlId = "tvl_custom_" + U.createId("custom");
+      var customTvl = {
+        id: tvlId,
+        name: "TVL " + name,
+        species: name,
+        normalizedSpecies: name,
+        version: "custom",
+        updatedAt: new Date().toISOString(),
+        model: "berkhout",
+        sourceMode: "tvl",
+        baseTvlId: selectedTvlId,
+        formula: {
+          volume: "V = a * K^b * f",
+          diameter: "D = K / π",
+          height: "H = 40000 * π * a * K^(b-2)"
+        },
+        coefficients: {
+          a: baseA,
+          b: baseB,
+          factor: factor
+        },
+        K: { unit: "cm", description: "Keliling" },
+        diameter: { unit: "cm" },
+        height: { unit: "m" },
+        volume: { unit: "m3" }
+      };
+      state.tvls[tvlId] = customTvl;
 
       state.species.push({
         id: speciesId,
@@ -111,7 +132,7 @@
         formula: {
           volume: "V = a * K^b * f",
           diameter: "D = K / π",
-          height: "H = (40000 * π * a * K^(b-2)) / fc"
+          height: "H = 40000 * π * a * K^(b-2)"
         },
         coefficients: {
           a: a,

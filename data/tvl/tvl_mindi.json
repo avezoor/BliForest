@@ -13,8 +13,7 @@
   "coefficients": {
     "a": 6.8485716e-06,
     "b": 2.427,
-    "factor": 0.8,
-    "factor_correction": 0.7
+    "factor": 0.8
   },
   "K": {
     "unit": "cm",
