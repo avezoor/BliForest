@@ -8,6 +8,9 @@ function init() {
 
   
   App.storage.initState();
+  // Normalisasi nomor data lama agar langsung mengikuti aturan penomoran terbaru.
+  App.handlers.renumberAllTreeNumbers();
+  App.storage.saveState();
 
   
   App.handlers.bindNav();

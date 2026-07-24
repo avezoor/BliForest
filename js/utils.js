@@ -118,18 +118,6 @@
   function editIcon() {
     return '<svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
   }
-  function dataToExcel(data) {
-    var headers = data[0];
-    var rows = data.slice(1);
-    var headerHtml = headers.map(function(h) { return "<th>" + escapeHtml(String(h)) + "</th>"; }).join("");
-    var rowsHtml = rows.map(function(row) {
-      return "<tr>" + row.map(function(cell) {
-        return "<td>" + escapeHtml(String(cell ?? "")) + "</td>";
-      }).join("") + "</tr>";
-    }).join("");
-    var excelNs = 'xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/html5/"';
-    return "<html " + excelNs + "><head><meta charset=\"utf-8\"><style>td,th{border:1px solid #d0d0d0;padding:6px 10px;font-size:12px}th{background:#125e3d;color:#fff;font-weight:bold}</style></head><body><table><thead><tr>" + headerHtml + "</tr></thead><tbody>" + rowsHtml + "</tbody></table></body></html>";
-  }
   global.Utils = {
     escapeHtml: escapeHtml,
     structuredCloneSafe: structuredCloneSafe,
@@ -146,7 +134,6 @@
     eyeIcon: eyeIcon,
     downloadIcon: downloadIcon,
     trashIcon: trashIcon,
-    editIcon: editIcon,
-    dataToExcel: dataToExcel
+    editIcon: editIcon
   };
 })(window);

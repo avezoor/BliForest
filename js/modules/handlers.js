@@ -197,95 +197,220 @@
     }
   }
 
-  // ================================================================
-  // PREVIEW NOMOR POHON (dipasang saat form tree-entry dirender)
-  // ================================================================
+  function parseTreeNum(value) {
+    var n = parseInt(value, 10);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function parseBlockRank(value) {
+    // Nama blok di lapangan umumnya berupa "Blok 1", "Blok 2", dst.
+    // parseInt("Blok 1") menghasilkan NaN, sehingga versi lama gagal menentukan
+    // bahwa Blok 1 harus diproses sebelum Blok 2. Ambil angka pertama di mana pun
+    // posisinya agar urutan lintas blok tetap deterministik.
+    var text = String(value || "").trim();
+    var match = text.match(/\d+/);
+    if (!match) return Number.MAX_SAFE_INTEGER;
+    var n = parseInt(match[0], 10);
+    return isNaN(n) ? Number.MAX_SAFE_INTEGER : n;
+  }
+
+  function compareClampBlockOrder(a, b) {
+    if (a === b) return 0;
+
+    var rankA = parseBlockRank(a && a.block);
+    var rankB = parseBlockRank(b && b.block);
+    if (rankA !== rankB) return rankA - rankB;
+
+    // Jika angka sama / tidak ada angka, gunakan natural sort pada nama blok.
+    // Opsi numeric memastikan "Blok 2" tetap sebelum "Blok 10".
+    var nameA = String(a && a.block || "").trim();
+    var nameB = String(b && b.block || "").trim();
+    var nameDiff = nameA.localeCompare(nameB, "id", { numeric: true, sensitivity: "base" });
+    if (nameDiff) return nameDiff;
+
+    // Fallback stabil untuk data duplikat nama blok. Jangan pernah memakai nomor pohon
+    // sebagai penentu urutan antarblok karena itulah yang mencegah recalculate.
+    var timeA = Date.parse(a && a.createdAt || "");
+    var timeB = Date.parse(b && b.createdAt || "");
+    if (Number.isFinite(timeA) && Number.isFinite(timeB) && timeA !== timeB) return timeA - timeB;
+
+    var codeDiff = String(a && a.code || "").localeCompare(String(b && b.code || ""), "id", { numeric: true });
+    if (codeDiff) return codeDiff;
+    return String(a && a.id || "").localeCompare(String(b && b.id || ""), "id");
+  }
+
+  function sameNumberingGroup(a, b) {
+    if (!a || !b) return false;
+    return String(a.bkph || "").trim() === String(b.bkph || "").trim() &&
+      String(a.rph || "").trim() === String(b.rph || "").trim() &&
+      String(a.compartment || "").trim() === String(b.compartment || "").trim() &&
+      String(a.speciesId || "").trim() === String(b.speciesId || "").trim();
+  }
+
+  function numberingGroupClamps(seed, state) {
+    return (state.clamps || []).filter(function(c) {
+      return sameNumberingGroup(c, seed);
+    });
+  }
+
+  function treeTime(tree) {
+    var raw = tree && (tree.numberingSpeciesSince || tree.createdAt);
+    var ms = raw ? Date.parse(raw) : NaN;
+    return Number.isFinite(ms) ? ms : Number.MAX_SAFE_INTEGER;
+  }
+
+  function compareWithinSpecies(a, b) {
+    var blockDiff = compareClampBlockOrder(a.clamp, b.clamp);
+    if (blockDiff) return blockDiff;
+
+    var numA = parseTreeNum(a.tree.treeNumber);
+    var numB = parseTreeNum(b.tree.treeNumber);
+    if (numA && numB && numA !== numB) return numA - numB;
+
+    var timeDiff = treeTime(a.tree) - treeTime(b.tree);
+    if (timeDiff) return timeDiff;
+    return String(a.tree.id || "").localeCompare(String(b.tree.id || ""), "id");
+  }
+
+  function orderedNumberingGroupClamps(seed, state) {
+    return numberingGroupClamps(seed, state).slice().sort(compareClampBlockOrder);
+  }
+
+  function orderedPrimaryEntriesForClamp(clamp, virtualEntry) {
+    var entries = (clamp.trees || []).filter(function(t) {
+      return t.speciesId === clamp.speciesId;
+    }).map(function(t) {
+      return { clamp: clamp, tree: t };
+    });
+
+    if (virtualEntry && virtualEntry.clamp === clamp && virtualEntry.tree.speciesId === clamp.speciesId) {
+      entries.push(virtualEntry);
+    }
+
+    return entries.sort(compareWithinSpecies);
+  }
+
+  function orderedSecondaryEntriesForClamp(clamp, virtualEntry) {
+    var secondary = (clamp.trees || []).filter(function(t) {
+      return t.speciesId !== clamp.speciesId;
+    }).map(function(t) {
+      return { clamp: clamp, tree: t };
+    });
+
+    if (virtualEntry && virtualEntry.clamp === clamp && virtualEntry.tree.speciesId !== clamp.speciesId) {
+      secondary.push(virtualEntry);
+    }
+
+    // Pengelompokan tanaman sekunder hanya berlaku di dalam bloknya sendiri.
+    // Nomornya tetap menjadi bagian dari rangkaian lintas blok: nomor sekunder terakhir
+    // pada blok ini menentukan nomor awal blok berikutnya. Antar-jenis sekunder tetap
+    // dikelompokkan berdasarkan urutan pertama kali jenis itu muncul di blok tersebut.
+    var groups = {};
+    secondary.forEach(function(entry) {
+      var speciesId = String(entry.tree.speciesId || "");
+      if (!groups[speciesId]) {
+        groups[speciesId] = { speciesId: speciesId, entries: [], firstTime: Number.MAX_SAFE_INTEGER, firstNo: Number.MAX_SAFE_INTEGER };
+      }
+      groups[speciesId].entries.push(entry);
+      groups[speciesId].firstTime = Math.min(groups[speciesId].firstTime, treeTime(entry.tree));
+      var n = parseTreeNum(entry.tree.treeNumber);
+      if (n > 0) groups[speciesId].firstNo = Math.min(groups[speciesId].firstNo, n);
+    });
+
+    var ordered = [];
+    Object.keys(groups).map(function(k) { return groups[k]; }).sort(function(a, b) {
+      if (a.firstTime !== b.firstTime) return a.firstTime - b.firstTime;
+      if (a.firstNo !== b.firstNo) return a.firstNo - b.firstNo;
+      return a.speciesId.localeCompare(b.speciesId, "id");
+    }).forEach(function(group) {
+      group.entries.sort(compareWithinSpecies).forEach(function(entry) {
+        ordered.push(entry);
+      });
+    });
+    return ordered;
+  }
+
+  function renumberNumberingGroup(seed, state) {
+    if (!seed) return;
+
+    // Satu rangkaian nomor berjalan lintas blok untuk grup BKPH+RPH+Petak+Jenis Utama yang sama.
+    // Di SETIAP blok, tanaman pokok selalu ditempatkan lebih dulu, baru tanaman sekunder.
+    // Nomor awal blok berikutnya = nomor terakhir SELURUH pohon pada blok sebelumnya + 1.
+    var nextNo = 1;
+    orderedNumberingGroupClamps(seed, state).forEach(function(clamp) {
+      orderedPrimaryEntriesForClamp(clamp).forEach(function(entry) {
+        entry.tree.treeNumber = String(nextNo++);
+      });
+      orderedSecondaryEntriesForClamp(clamp).forEach(function(entry) {
+        entry.tree.treeNumber = String(nextNo++);
+      });
+    });
+  }
+
+  function renumberAllTreeNumbers(state) {
+    var seen = {};
+    (state.clamps || []).forEach(function(clamp) {
+      var key = [clamp.bkph, clamp.rph, clamp.compartment, clamp.speciesId].map(function(v) {
+        return String(v || "").trim();
+      }).join("\u001f");
+      if (seen[key]) return;
+      seen[key] = true;
+      renumberNumberingGroup(clamp, state);
+    });
+  }
+
   function updateTreeNumberPreview(form) {
     if (!form) return;
     var speciesId = form.elements && form.elements.speciesId && form.elements.speciesId.value;
-    var block = form.dataset.block;
     var preview = form.querySelector(".tree-number-preview");
     var noEl = preview && preview.querySelector(".preview-no");
     var ruleEl = preview && preview.querySelector(".preview-rule");
     if (!preview || !noEl || !ruleEl) return;
 
-    if (!speciesId || !block) {
+    var state = App.storage.state;
+    var clamp = (state.clamps || []).find(function(c) { return c.id === form.dataset.clampId; });
+    if (!clamp || !speciesId) {
       preview.style.display = "none";
       return;
     }
 
-    var state = App.storage.state;
-    var sp = App.storage.getSpecies(speciesId);
-    var speciesName = sp ? sp.name : speciesId;
-
-    function parseTreeNum(n) {
-      var x = parseInt(n, 10);
-      return isNaN(x) ? 0 : x;
-    }
-
-    var allTrees = (state.clamps || []).reduce(function(acc, c) {
-      return acc.concat((c.trees || []).map(function(t) {
-        return { treeNumber: t.treeNumber, speciesId: t.speciesId, block: c.block };
-      }));
-    }, []);
-
-    function getTreesInBlock(b) {
-      return allTrees.filter(function(t) { return t.block === b; });
-    }
-
-    function getLastTreeOfSpeciesInBlock(b, sid) {
-      var trees = getTreesInBlock(b).filter(function(t) { return t.speciesId === sid; });
-      if (!trees.length) return null;
-      return trees.reduce(function(prev, curr) {
-        return parseTreeNum(prev.treeNumber) >= parseTreeNum(curr.treeNumber) ? prev : curr;
-      });
-    }
-
-    function getLastTreeInBlock(b) {
-      var trees = getTreesInBlock(b);
-      if (!trees.length) return null;
-      return trees.reduce(function(prev, curr) {
-        return parseTreeNum(prev.treeNumber) >= parseTreeNum(curr.treeNumber) ? prev : curr;
-      });
-    }
-
-    var usedBlocks = [];
-    (state.clamps || []).forEach(function(c) {
-      if (usedBlocks.indexOf(c.block) === -1) usedBlocks.push(c.block);
+    var localMaxNo = 0;
+    (clamp.trees || []).forEach(function(t) {
+      localMaxNo = Math.max(localMaxNo, parseTreeNum(t.treeNumber));
     });
 
-    var prevTreeOfSameSpecies = getLastTreeOfSpeciesInBlock(block, speciesId);
-    var lastTreeInBlock = getLastTreeInBlock(block);
-    var nextNo;
-    var ruleText = "";
+    var virtualTree = {
+      id: "__preview__",
+      treeNumber: String(localMaxNo + 1),
+      speciesId: speciesId,
+      createdAt: new Date().toISOString(),
+      numberingSpeciesSince: new Date().toISOString()
+    };
+    var virtualEntry = { clamp: clamp, tree: virtualTree };
+    var previewNo = 1;
+    var runningNo = 1;
 
-    if (prevTreeOfSameSpecies) {
-      nextNo = parseTreeNum(prevTreeOfSameSpecies.treeNumber) + 1;
-      ruleText = "(Blok sama + jenis sama → lanjut sequential)";
-    } else if (lastTreeInBlock) {
-      nextNo = parseTreeNum(lastTreeInBlock.treeNumber) + 1;
-      ruleText = "(Blok sama + jenis berbeda → mulai dari N+1)";
-    } else {
-      var cbIdx = usedBlocks.indexOf(block);
-      var foundPrevBlock = false;
-      for (var i = cbIdx - 1; i >= 0; i--) {
-        var pb = usedBlocks[i];
-        var pbLast = getLastTreeInBlock(pb);
-        if (pbLast) {
-          nextNo = parseTreeNum(pbLast.treeNumber) + 1;
-          ruleText = "(Blok berbeda → lanjut dari Blok " + pb + ")";
-          foundPrevBlock = true;
-          break;
+    // Simulasikan urutan final seluruh grup agar preview sama persis dengan hasil renumber.
+    // Blok sebelumnya (pokok + sekunder) selalu menentukan nomor awal blok berikutnya.
+    orderedNumberingGroupClamps(clamp, state).some(function(groupClamp) {
+      var virtualForThisClamp = groupClamp === clamp ? virtualEntry : null;
+      var orderedEntries = orderedPrimaryEntriesForClamp(groupClamp, virtualForThisClamp)
+        .concat(orderedSecondaryEntriesForClamp(groupClamp, virtualForThisClamp));
+
+      for (var i = 0; i < orderedEntries.length; i++) {
+        if (orderedEntries[i].tree === virtualTree) {
+          previewNo = runningNo;
+          return true;
         }
+        runningNo++;
       }
-      if (!foundPrevBlock) {
-        nextNo = 1;
-        ruleText = "(Blok baru → mulai dari #1)";
-      }
-    }
+      return false;
+    });
 
-    noEl.textContent = "#" + nextNo;
-    ruleEl.textContent = ruleText;
+    noEl.textContent = "#" + previewNo;
+    ruleEl.textContent = speciesId === clamp.speciesId
+      ? "(Tanaman pokok · diprioritaskan di blok ini; seluruh blok sesudahnya ikut dihitung ulang)"
+      : "(Tanaman tambahan · setelah tanaman pokok di blok ini; nomor akhirnya menjadi acuan blok berikutnya)";
     preview.style.display = "block";
   }
 
@@ -449,12 +574,21 @@
       return;
     }
 
+    var oldNumberingGroup = {
+      bkph: clamp.bkph,
+      rph: clamp.rph,
+      compartment: clamp.compartment,
+      speciesId: clamp.speciesId
+    };
+
     clamp.bkph = bkph;
     clamp.rph = rph;
     clamp.speciesId = speciesId;
     clamp.block = block;
     clamp.compartment = compartment;
 
+    renumberNumberingGroup(oldNumberingGroup, state);
+    renumberNumberingGroup(clamp, state);
     App.storage.saveState();
     App.components.closeModal();
     App.components.renderClampSpeciesSelect();
@@ -501,7 +635,9 @@
     if (action === "delete-clamp") {
       var clamp2 = state.clamps.find(function(c) { return c.id === id; });
       if (!clamp2 || !confirm("Hapus " + clamp2.code + " beserta seluruh data pohonnya?")) return;
+      var deletedGroup = { bkph: clamp2.bkph, rph: clamp2.rph, compartment: clamp2.compartment, speciesId: clamp2.speciesId };
       state.clamps = state.clamps.filter(function(c) { return c.id !== clamp2.id; });
+      renumberNumberingGroup(deletedGroup, state);
       App.storage.expandedClamps.delete(clamp2.id);
       App.storage.clampPage = 1;
       App.storage.saveState();
@@ -517,6 +653,7 @@
       var tree = (clamp3.trees || []).find(function(t) { return t.id === btn.dataset.treeId; });
       if (!tree || !confirm("Hapus data pohon " + tree.treeNumber + "?")) return;
       clamp3.trees = (clamp3.trees || []).filter(function(t) { return t.id !== tree.id; });
+      renumberNumberingGroup(clamp3, state);
       App.storage.setTreePage(clamp3.id, 1);
       App.storage.saveState();
       App.components.renderClamps();
@@ -632,8 +769,10 @@
     var tvlId = (sp && sp.tvlId) || (tvl ? newSpeciesId : null);
     var isBerkhout = tvl && tvl.model === "berkhout";
 
+    var oldSpeciesId = tree.speciesId;
     tree.treeNumber = newTreeNumber;
     tree.speciesId = newSpeciesId;
+    if (oldSpeciesId !== newSpeciesId) tree.numberingSpeciesSince = new Date().toISOString();
     tree.circumference = newCircumference;
     tree.tvlId = tvlId;
     tree.note = newNote;
@@ -646,24 +785,27 @@
       tree.volumeUpdatedAt = new Date().toISOString();
     }
 
+    renumberNumberingGroup(clamp, state);
     App.storage.saveState();
     App.components.closeModal();
     App.components.renderClamps();
     App.components.renderRecap();
-    App.components.showToast("Data pohon berhasil diperbarui.");
+    App.components.showToast("Data pohon berhasil diperbarui dan nomor telah dihitung ulang.");
   }
 
   function handleTreeEntrySubmit(e) {
     var form = e.target.closest(".tree-entry-form");
     if (!form) return;
     e.preventDefault();
-    var clamp = App.storage.state.clamps.find(function(c) { return c.id === form.dataset.clampId; });
+
+    var state = App.storage.state;
+    var clamp = (state.clamps || []).find(function(c) { return c.id === form.dataset.clampId; });
     if (!clamp) return;
+
     var data = new FormData(form);
     var speciesId = String(data.get("speciesId") || "");
     var circumference = Number(data.get("circumference"));
     var lookup = App.tvl && App.tvl.lookupVolume(speciesId, circumference);
-    var state = App.storage.state;
 
     if (!speciesId) {
       App.components.showToast("Pilih jenis pohon.");
@@ -678,121 +820,47 @@
       return;
     }
 
-    // ================================================================
-    // LOGIKA PENOMORAN POHON (SKHP)
-    //
-    //   Aturan:
-    //   1. Blok sama + Jenis sama     → sequential (1, 2, 3...)
-    //   2. Blok sama + Jenis berbeda → mulai dari (no terakhir blok tersebut) + 1
-    //   3. Blok berbeda              → lanjut dari no terakhir blok sebelumnya (tidak reset)
-    // ================================================================
-
     var sp = App.storage.getSpecies(speciesId);
     var tvl = sp ? state.tvls && state.tvls[sp.tvlId] : state.tvls && state.tvls[speciesId];
-    var speciesName = sp ? sp.name : (tvl ? (tvl.species || tvl.name || "KAYU") : "KAYU");
+    var tvlId = (sp && sp.tvlId) || (tvl && tvl.id) || speciesId;
+    var now = new Date().toISOString();
 
-    // Ambil semua pohon dari SEMUA clamp
-    var allTrees = (state.clamps || []).reduce(function(acc, c) {
-      return acc.concat((c.trees || []).map(function(t) {
-        return { treeNumber: t.treeNumber, speciesId: t.speciesId, block: c.block, clampId: c.id };
-      }));
-    }, []);
-
-    // Helper: parse nomor pohon jadi integer
-    function parseTreeNum(n) {
-      var x = parseInt(n, 10);
-      return isNaN(x) ? 0 : x;
-    }
-
-    // Helper: dapat daftar pohon di blok tertentu
-    function getTreesInBlock(block) {
-      return allTrees.filter(function(t) { return t.block === block; });
-    }
-
-    // Helper: dapat pohon terakhir dari species tertentu dalam blok tertentu
-    function getLastTreeOfSpeciesInBlock(block, sid) {
-      var trees = getTreesInBlock(block).filter(function(t) { return t.speciesId === sid; });
-      if (!trees.length) return null;
-      return trees.reduce(function(prev, curr) {
-        return parseTreeNum(prev.treeNumber) >= parseTreeNum(curr.treeNumber) ? prev : curr;
-      });
-    }
-
-    // Helper: dapat pohon terakhir DI BLOK tersebut (apapun speciesnya)
-    function getLastTreeInBlock(block) {
-      var trees = getTreesInBlock(block);
-      if (!trees.length) return null;
-      return trees.reduce(function(prev, curr) {
-        return parseTreeNum(prev.treeNumber) >= parseTreeNum(curr.treeNumber) ? prev : curr;
-      });
-    }
-
-    // Helper: dapat blok-blok yang sudah ada dalam urutan (berdasarkan clamp creation atau
-    // gunakan kolom block dan urutkan alfabet)
-    var usedBlocks = [];
-    (state.clamps || []).forEach(function(c) {
-      if (usedBlocks.indexOf(c.block) === -1) usedBlocks.push(c.block);
+    var maxNo = 0;
+    (clamp.trees || []).forEach(function(t) {
+      maxNo = Math.max(maxNo, parseTreeNum(t.treeNumber));
     });
 
-    // Tentukan tree number baru berdasarkan aturan
-    var currentBlock = clamp.block;
-    var prevTreeOfSameSpecies = getLastTreeOfSpeciesInBlock(currentBlock, speciesId);
-    var lastTreeInBlock = getLastTreeInBlock(currentBlock);
-    var treeNumber;
-
-    if (prevTreeOfSameSpecies) {
-      // ATURAN 1: Blok sama + Jenis sama → sequential
-      treeNumber = String(parseTreeNum(prevTreeOfSameSpecies.treeNumber) + 1);
-    } else if (lastTreeInBlock) {
-      // ATURAN 2: Blok sama + Jenis berbeda → mulai dari N+1 blok tersebut
-      treeNumber = String(parseTreeNum(lastTreeInBlock.treeNumber) + 1);
-    } else {
-      // Blok belum punya pohon sama sekali → cek blok sebelumnya
-      var currentBlockIdx = usedBlocks.indexOf(currentBlock);
-      var foundPrevBlock = false;
-      for (var i = currentBlockIdx - 1; i >= 0; i--) {
-        var prevBlock = usedBlocks[i];
-        var prevBlockLast = getLastTreeInBlock(prevBlock);
-        if (prevBlockLast) {
-          // ATURAN 3: Blok berbeda → lanjut dari no terakhir blok sebelumnya
-          treeNumber = String(parseTreeNum(prevBlockLast.treeNumber) + 1);
-          foundPrevBlock = true;
-          break;
-        }
-      }
-      if (!foundPrevBlock) {
-        // Benar-benar blok baru pertama
-        treeNumber = "1";
-      }
-    }
-
-    var tvlId = (sp && sp.tvlId) || (tvl ? speciesId : null);
-    var isBerkhout = tvl && tvl.model === "berkhout";
-    clamp.trees = clamp.trees || [];
+    // Nomor sementara hanya dipakai untuk mempertahankan urutan stabil sebelum proses renumber.
     var newTree = {
       id: U.createId("tree"),
-      treeNumber: treeNumber,
+      treeNumber: String(maxNo + 1),
       speciesId: speciesId,
       circumference: circumference,
+      diameter: Number(lookup.diameter) || 0,
+      height: Number(lookup.height) || 0,
       volume: lookup.volume,
-      tvlCircumference: isBerkhout ? circumference : lookup.matchedCircumference,
+      tvlCircumference: tvl && tvl.model === "berkhout" ? circumference : lookup.matchedCircumference,
       tvlId: tvlId,
-      tvlVersion: (tvl && tvl.version) || (App.storage.state.tvlSync && App.storage.state.tvlSync.indexVersion) || null,
-      volumeUpdatedAt: new Date().toISOString(),
+      tvlVersion: (tvl && tvl.version) || (state.tvlSync && state.tvlSync.indexVersion) || null,
+      volumeUpdatedAt: now,
       note: String(data.get("note") || "").trim(),
-      createdAt: new Date().toISOString()
+      createdAt: now,
+      numberingSpeciesSince: now
     };
-    if (isBerkhout) {
-      newTree.diameter = lookup.diameter;
-      newTree.height = lookup.height;
-    }
+
+    clamp.trees = clamp.trees || [];
     clamp.trees.push(newTree);
+
+    // Dalam setiap blok: tanaman pokok lebih dulu, lalu tanaman sekunder.
+    // Nomor terakhir seluruh isi blok menjadi acuan nomor awal blok berikutnya.
+    renumberNumberingGroup(clamp, state);
+
     App.storage.setTreePage(clamp.id, 1);
     App.storage.saveState();
     form.reset();
     App.components.renderClamps();
     App.components.renderRecap();
-    App.components.showToast("Pohon " + treeNumber + " ditambahkan dengan volume " + U.formatNumber(lookup.volume, 4) + " m3.");
+    App.components.showToast("Pohon " + newTree.treeNumber + " ditambahkan dengan volume " + U.formatNumber(lookup.volume, 4) + " m3.");
   }
 
   function handleTreeEntryVolumeUpdate(e) {
@@ -871,6 +939,7 @@
         Object.assign(state.tvlSync, restored.tvlSync);
         state.tvlSync.managedIds = Array.isArray(restored.tvlSync.managedIds) ? restored.tvlSync.managedIds : [];
       }
+      renumberAllTreeNumbers(state);
       App.storage.saveState();
       App.storage.expandedClamps.clear();
       App.storage.clampPage = 1;
@@ -903,7 +972,10 @@
     bindRecap: bindRecap,
     bindMaster: bindMaster,
     bindGlobal: bindGlobal,
-    updateTreeNumberPreview: updateTreeNumberPreview
+    updateTreeNumberPreview: updateTreeNumberPreview,
+    renumberAllTreeNumbers: function() {
+      renumberAllTreeNumbers(App.storage.state);
+    }
   };
 
   global.App = App;

@@ -274,13 +274,12 @@
     var treeSq = App.storage.getTreeSearch(clamp.id);
     var filteredTrees = App.storage.filterTrees(clamp.trees || [], treeSq);
 
+    // Tampilan harus mengikuti nomor pohon hasil renumber, bukan urutan ID jenis.
     filteredTrees.sort(function(a, b) {
-      if (a.speciesId !== b.speciesId) {
-        return a.speciesId.localeCompare(b.speciesId);
-      }
-      var numA = parseInt(a.treeNumber) || 0;
-      var numB = parseInt(b.treeNumber) || 0;
-      return numA - numB;
+      var numA = parseInt(a.treeNumber, 10) || 0;
+      var numB = parseInt(b.treeNumber, 10) || 0;
+      if (numA !== numB) return numA - numB;
+      return String(a.speciesId || "").localeCompare(String(b.speciesId || ""), "id");
     });
 
     var curPage = App.storage.getTreePage(clamp.id);
@@ -310,9 +309,8 @@
           '<span><b>Jenis:</b> ' + U.escapeHtml(speciesName) + '</span>' +
         '</div>' +
         '<h5 class="detail-title">Tambah Data Pohon</h5>' +
-        '<form class="tree-entry-form" data-clamp-id="' + clamp.id + '" data-block="' + U.escapeHtml(clamp.block) + '">' +
+        '<form class="tree-entry-form" data-clamp-id="' + clamp.id + '" data-block="' + U.escapeHtml(clamp.block) + '" data-bkph="' + U.escapeHtml(clamp.bkph) + '" data-rph="' + U.escapeHtml(clamp.rph) + '" data-compartment="' + U.escapeHtml(clamp.compartment) + '">' +
           '<label class="field"><span>Jenis Pohon</span><select name="speciesId" required>' + speciesOptionsHtml(clamp.speciesId) + '</select></label>' +
-          '<div class="tree-number-preview" style="margin-bottom:12px;padding:8px 12px;background:#e8f5e9;border-radius:6px;font-size:0.82rem;color:#1a5c1a;display:none"><span>🔢 No. pohon berikutnya: </span><strong class="preview-no"></strong><span class="preview-rule" style="margin-left:8px;color:#555;font-size:0.78rem"></span></div>' +
           '<label class="field"><span>Keliling (cm)</span><input name="circumference" type="number" min="0" step="0.1" required placeholder="0"></label>' +
           '<label class="field"><span>Volume (m3)</span><input name="volume" type="text" readonly value="0,0000"></label>' +
           '<label class="field full"><span>Keterangan</span><textarea name="note" maxlength="500" placeholder="Keterangan"></textarea></label>' +
@@ -486,7 +484,9 @@
       ["No Pohon", "Jenis", "Keliling (cm)", "Diameter (cm)", "Volume (m3)", "Keterangan"]
     ];
 
-    clamp.trees.forEach(function(t) {
+    (clamp.trees || []).slice().sort(function(a, b) {
+      return (parseInt(a.treeNumber, 10) || 0) - (parseInt(b.treeNumber, 10) || 0);
+    }).forEach(function(t) {
       var treeSpecies = App.storage.getSpecies(t.speciesId);
       var treeTvl = treeSpecies ? state.tvls && state.tvls[treeSpecies.tvlId] : state.tvls && state.tvls[t.tvlId];
       var treeSpeciesName = treeSpecies ? treeSpecies.name : (treeTvl ? (treeTvl.species || treeTvl.name || "") : "");
@@ -494,8 +494,13 @@
     });
 
     var safeCode = (clamp.code || "daftar-klem").replace(/[^a-z0-9_-]+/gi, "-");
-    U.downloadBlob(U.dataToExcel(headerData), safeCode + "-data-pohon-" + U.dateStamp() + ".xls", "application/vnd.ms-excel;charset=utf-8");
-    App.components.showToast("Data pohon berhasil diekspor.");
+    var exportResult = global.ExcelExport.download(headerData, safeCode + "-data-pohon-" + U.dateStamp() + ".xlsx", {
+      sheetName: "Data Pohon",
+      headerRows: [9],
+      labelRows: [1, 2, 3, 4, 5, 6, 7],
+      widths: [13, 20, 15, 15, 15, 28]
+    });
+    App.components.showToast(exportResult.fallback ? "XLSX tidak tersedia; data diekspor sebagai CSV." : "Data pohon berhasil diekspor sebagai XLSX.");
   }
 
   function exportRecapCsv() {
@@ -516,7 +521,13 @@
         U.sum(trees, function(t) { return t.volume; }).toFixed(4)
       ]);
     });
-    U.downloadBlob(U.dataToExcel(data), "rekap-klem-" + U.dateStamp() + ".xls", "application/vnd.ms-excel;charset=utf-8");
+    var exportResult = global.ExcelExport.download(data, "rekap-klem-" + U.dateStamp() + ".xlsx", {
+      sheetName: "Rekap Klem",
+      headerRows: [1],
+      widths: [18, 16, 16, 14, 14, 20, 22, 22, 16, 20]
+    });
+    if (exportResult.fallback) App.components.showToast("XLSX tidak tersedia; rekap diekspor sebagai CSV.");
+    else App.components.showToast("Rekap berhasil diekspor sebagai XLSX.");
   }
 
   function renderAll() {
